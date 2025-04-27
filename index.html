@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Report Spam Text Message</title>
+</head>
+<body>
+    <h1>Report a Spam Text Message</h1>
+    <form id="spamReportForm">
+        <label>Name: <input type="text" name="name" required></label><br>
+        <label>Email: <input type="email" name="email" required></label><br>
+        <label>Your Phone Number: <input type="text" name="phoneNumber" required></label><br>
+        <label>Offending Number: <input type="text" name="offendingNumber" required></label><br>
+        <label>Date Sent: <input type="date" name="date" required></label><br>
+        <label>Time Sent: <input type="time" name="time" required></label><br>
+        <label>Time Zone: <input type="text" name="timeZone" placeholder="e.g. EST, PST" required></label><br>
+        <label>Message Content (optional):<br>
+            <textarea name="messageContent" rows="4" cols="50"></textarea>
+        </label><br><br>
+        <button type="submit">Submit Report</button>
+    </form>
+
+    <div id="response" style="margin-top: 30px;"></div>
+
+    <script>
+        document.getElementById('spamReportForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            const response = await fetch('/submit-report', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            const abuseList = result.abuseEmails.join(", ");
+            const copyText = `To: ${abuseList}\\nSubject: ${result.emailSubject}\\n\\n${result.emailBody}`;
+
+            document.getElementById('response').innerHTML = `
+                <h2>Ready to Report</h2>
+                <p><strong>Carrier:</strong> <span id="provider">${result.provider}</span></p>
+                <p><strong>Send this email to:</strong> <span id="abuseList">${abuseList}</span></p>
+                <p><strong>Subject:</strong> <span id="emailSubject">${result.emailSubject}</span></p>
+                <textarea id="emailBody" rows="15" cols="80">${result.emailBody}</textarea><br><br>
+                <button onclick="copyEmail()">Copy Email Text</button>
+                <button onclick="downloadEML()">Download .eml File</button>
+            `;
+
+            window.copyEmail = function() {
+                const textarea = document.getElementById('emailBody');
+                textarea.select();
+                document.execCommand('copy');
+                alert('Email text copied to clipboard! Paste it into your own email app.');
+            };
+
+            window.downloadEML = function() {
+                const abuseList = document.getElementById('abuseList').textContent;
+                const subject = document.getElementById('emailSubject').textContent;
+                const body = document.getElementById('emailBody').value;
+
+                const emlContent = [
+                    "To: " + abuseList,
+                    "Subject: " + subject,
+                    "Content-Type: text/plain; charset=UTF-8",
+                    "",
+                    body
+                ].join("\\r\\n");
+
+                const blob = new Blob([emlContent], { type: "message/rfc822" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = "spam_report.eml";
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            };
+        });
+    </script>
+</body>
+</html>
+
