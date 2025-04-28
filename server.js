@@ -2,15 +2,15 @@ const express = require('express');
 const fetch = require('node-fetch');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
-const abuseContacts = require('./abuseContacts'); // separate big file
+const abuseContacts = require('./abuseContacts'); // Big carrier contact list
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Global Rate Limiter (5 requests per minute per IP)
+// Rate Limit: 5 requests per minute
 const limiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
-  max: 5, // limit each IP to 5 requests per minute
+  windowMs: 1 * 60 * 1000,
+  max: 5,
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -23,30 +23,41 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/public/index.html');
 });
 
+// Helper to sanitize user inputs
 const sanitizeInput = (input, maxLength = 500) => {
   if (typeof input !== 'string') return '';
   return input.replace(/[<>"']/g, '').substring(0, maxLength).trim();
 };
 
+// Helper to format phone numbers nicely
 const prettyNumber = (num) => {
   const n = num.replace(/\D/g, '');
   if (n.length === 10) {
-    return n.slice(0, 3) + '-' + n.slice(3, 6) + '-' + n.slice(6);
+    return `${n.slice(0, 3)}-${n.slice(3, 6)}-${n.slice(6)}`;
   } else if (n.length === 11 && n.startsWith('1')) {
-    return n.slice(1, 4) + '-' + n.slice(4, 7) + '-' + n.slice(7);
+    return `${n.slice(1, 4)}-${n.slice(4, 7)}-${n.slice(7)}`;
   } else {
     return num;
   }
 };
 
+// Normalize carrier names for matching
+const normalizeName = (name) => {
+  return name.toLowerCase().replace(/[^a-z0-9]/g, '');
+};
+
+// Find best abuse contact based on carrier name
 const findClosestAbuseContact = (carrierName) => {
-  carrierName = carrierName.toLowerCase();
+  const normalizedCarrier = normalizeName(carrierName);
+  
   for (const key in abuseContacts) {
-    if (carrierName.includes(key.toLowerCase()) || key.toLowerCase().includes(carrierName)) {
+    const normalizedKey = normalizeName(key);
+    if (normalizedCarrier === normalizedKey || normalizedCarrier.includes(normalizedKey) || normalizedKey.includes(normalizedCarrier)) {
       return abuseContacts[key];
     }
   }
-  return [`abuse@${carrierName.replace(/\s/g, '').toLowerCase()}.com`];
+  // No match found
+  return null; // ✅ No fallback guessing anymore
 };
 
 app.post('/submit-report', async (req, res) => {
@@ -73,7 +84,7 @@ app.post('/submit-report', async (req, res) => {
     const sanitizedTimeZone = sanitizeInput(timeZone, 20);
     const sanitizedMessageContent = sanitizeInput(messageContent, 2000);
 
-    let fullNumber = countryCode + sanitizedOffendingNumber.replace(/\D/g, '');
+    const fullNumber = countryCode + sanitizedOffendingNumber.replace(/\D/g, '');
 
     const lookupResponse = await fetch(`http://apilayer.net/api/validate?access_key=${process.env.NUMVERIFY_API_KEY}&number=${encodeURIComponent(fullNumber)}`);
     const lookupData = await lookupResponse.json();
@@ -81,12 +92,16 @@ app.post('/submit-report', async (req, res) => {
     const provider = lookupData.carrier || 'Unknown Carrier';
     let abuseEmails = findClosestAbuseContact(provider);
 
-    abuseEmails.push('potentialviolation@usac.org');
+    // Always CC USAC reporting
+    const ccEmails = ['potentialviolation@usac.org'];
+
+    // Add IRS reporting if selected
     if (isIRSScam === 'on' || isIRSScam === true) {
-      abuseEmails.push('phishing@irs.gov');
+      ccEmails.push('phishing@irs.gov');
     }
 
     const emailSubject = `Fraud Operators Using ${provider} Network (${prettyNumber(sanitizedOffendingNumber)})`;
+
     const emailBody = `
 Hello,
 
@@ -95,19 +110,30 @@ Fraudulent scam operation using this number ${prettyNumber(sanitizedOffendingNum
 This ${provider} customer is using your network for Fraud/Scam operations. Please cancel this customer using this line ${prettyNumber(sanitizedOffendingNumber)}, and all lines associated with them.
 
 They texted my number ${prettyNumber(sanitizedPhoneNumber)} at ${sanitizedTime} ${sanitizedTimeZone} on ${sanitizedDate}.
-
 ${sanitizedMessageContent ? `Message Content:\n"${sanitizedMessageContent}"\n` : ''}
-
 Thank you for your commitment to keeping criminals from using the ${provider} network for their criminal operations.
 
 -${sanitizedName}
     `.trim();
 
+    if (!abuseEmails) {
+      return res.json({
+        abuseEmails: [],
+        emailSubject,
+        emailBody,
+        provider,
+        manualAction: true,
+        message: `No known abuse contact found for "${provider}". Please report manually.`
+      });
+    }
+
     res.json({
       abuseEmails,
+      ccEmails,
       emailSubject,
       emailBody,
-      provider
+      provider,
+      manualAction: false
     });
 
   } catch (error) {
