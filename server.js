@@ -73,9 +73,7 @@ Fraudulent scam operation using this number ${prettyNumber(offendingNumber)}.
 This ${provider} customer is using your network for Fraud/Scam operations. Please cancel this customer using this line ${prettyNumber(offendingNumber)}, and all lines associated with them.
 
 They texted my number ${prettyNumber(phoneNumber)} at ${time} ${timeZone} on ${date}.
-
 ${messageContent ? `Message Content:\n\"${messageContent}\"\n` : ''}
-
 Thank you for your commitment to keeping criminals from using the ${provider} network for their criminal operations.
 
 -${name}
