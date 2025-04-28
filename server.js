@@ -94,7 +94,7 @@ const abuseContacts = {
   "USA Mobility Wireless, Inc.": ["customer.care@spok.com"],
   "Vonage": ["abuse@vonage.com", "phishing@vonage.com"],
   "ZipWhip": ["supportlist@zipwhip.com", "support@zipwhip.com", "reportabuse@zipwhip.com"],
-  "Bell Mobility": ["abuse@bell.ca"]
+  "Bell Mobility Inc.": ["abuse@bell.ca"]
 };
 
 const prettyNumber = (num) => {
