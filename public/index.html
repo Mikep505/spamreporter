@@ -2,142 +2,111 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Spam Text Message Reporter</title>
 </head>
 <body>
-  <h1>Report Scam/Fraud SMS  Message</h1>
+  <h1>Report Spam Text Message</h1>
 
-<div id="description" style="max-width:700px; margin-bottom:20px;">
   <p>
-    Have you ever received strange text messages from unknown numbers saying things like
-    "<em>How have you been?</em>" or "<em>What time are you picking me up?</em>"?
+    Have you ever received text messages from unknown numbers that try to seem familiar, like "how have you been?" or "what time are you picking me up?"  
+    These are called <strong>smishing texts</strong> — phishing attacks via SMS.  
+    This form makes it easy to report these numbers and get them investigated and canceled.  
+    Don't worry about reporting legitimate wrong-number texts — the carrier can tell the difference!
   </p>
-  <p>
-    These are called <strong>smishing</strong> attacks — like phishing, but delivered through SMS.
-  </p>
-  <p>
-    This form provides a fast, easy way to report suspicious numbers so that carriers can investigate and shut them down.
-  </p>
-  <p>
-    <strong>Don’t worry</strong> about accidentally reporting legitimate wrong-number texts — carriers are able to distinguish fraud from genuine messages.
-  </p>
-</div>
-
 
   <form id="reportForm">
-    <label for="name">Your Name:</label><br>
-    <input type="text" id="name" name="name" required><br><br>
+    <label>Name:<br><input type="text" name="name" required></label><br><br>
 
-    <label for="email">Your Email:</label><br>
-    <input type="email" id="email" name="email" required><br><br>
+    <label>Email:<br><input type="email" name="email" required></label><br><br>
 
-    <label for="phoneNumber">Your Phone Number (your number):</label><br>
-    <input type="text" id="phoneNumber" name="phoneNumber" required><br><br>
+    <label>Your Phone Number:<br><input type="text" name="phoneNumber" required></label><br><br>
 
-    <label for="countryCode">Country Code:</label><br>
-    <select id="countryCode" name="countryCode" required>
-      <option value="+1" selected>🇺🇸 United States (+1)</option>
-      <option value="+1">🇨🇦 Canada (+1)</option>
-      <option value="+44">🇬🇧 United Kingdom (+44)</option>
-      <option value="+61">🇦🇺 Australia (+61)</option>
-      <option value="+91">🇮🇳 India (+91)</option>
-      <option value="+81">🇯🇵 Japan (+81)</option>
-      <option value="+49">🇩🇪 Germany (+49)</option>
-      <option value="+33">🇫🇷 France (+33)</option>
-      <!-- you can add more countries if you want -->
-    </select><br><br>
+    <label>Country Code:<br>
+      <select name="countryCode" required>
+        <option value="+1" selected>🇺🇸 United States (+1)</option>
+        <option value="+44">🇬🇧 United Kingdom (+44)</option>
+        <option value="+61">🇦🇺 Australia (+61)</option>
+        <option value="+49">🇩🇪 Germany (+49)</option>
+        <option value="+33">🇫🇷 France (+33)</option>
+        <option value="+91">🇮🇳 India (+91)</option>
+        <!-- Add more countries as needed -->
+      </select>
+    </label><br><br>
 
-    <label for="offendingNumber">Offending Number (spammer):</label><br>
-    <input type="text" id="offendingNumber" name="offendingNumber" required><br><br>
+    <label>Offending Number:<br><input type="text" name="offendingNumber" required></label><br><br>
 
-    <label for="date">Date message was received:</label><br>
-    <input type="date" id="date" name="date" required><br><br>
+    <label>Date Message Sent:<br><input type="date" name="date" required></label><br><br>
 
-    <label for="time">Time message was received:</label><br>
-    <input type="time" id="time" name="time" required><br><br>
+    <label>Time Message Sent:<br><input type="time" name="time" required></label><br><br>
 
-    <label for="timeZone">Time Zone:</label><br>
-    <input type="text" id="timeZone" name="timeZone" placeholder="e.g., EST, PST" required><br><br>
+    <label>Time Zone:<br><input type="text" name="timeZone" value="EST" required></label><br><br>
 
-    <label for="messageContent">Message Content (optional):</label><br>
-    <textarea id="messageContent" name="messageContent" rows="4" cols="50"></textarea><br><br>
+    <label>Message Content (optional):<br><textarea name="messageContent" rows="4" cols="50"></textarea></label><br><br>
 
-    <label for="isIRSScam">
-      <input type="checkbox" id="isIRSScam" name="isIRSScam">
-      This was an IRS scam.
+    <label>
+      <input type="checkbox" name="isIRSScam"> This was an IRS scam
     </label><br><br>
 
     <button type="submit">Submit Report</button>
   </form>
 
-  <div id="result" style="display:none;">
-    <h2>Email Ready to Send!</h2>
-    <p><strong>To:</strong> <span id="emailTo"></span></p>
-    <p><strong>Subject:</strong> <span id="emailSubject"></span></p>
-    <p><strong>Body:</strong></p>
-    <textarea id="emailBody" rows="15" cols="80"></textarea><br><br>
+  <hr>
 
-    <button id="copyEmail">Copy Email</button>
-    <button id="downloadEML">Download .eml File</button>
-    <button id="openGmail">Open in Gmail</button>
-    <button id="openOutlook">Open in Outlook/Hotmail</button>
-  </div>
+  <div id="manualMessage" style="display:none; color: red; font-weight: bold; margin-top:20px;"></div>
+  <div id="result" style="margin-top:20px;"></div>
 
   <script>
-    document.getElementById('reportForm').addEventListener('submit', async function(e) {
+    const form = document.getElementById('reportForm');
+
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const formData = new FormData(this);
-      const data = Object.fromEntries(formData.entries());
 
-      const response = await fetch('/submit-report', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
+      const formData = {
+        name: form.name.value,
+        email: form.email.value,
+        phoneNumber: form.phoneNumber.value,
+        countryCode: form.countryCode.value,
+        offendingNumber: form.offendingNumber.value,
+        date: form.date.value,
+        time: form.time.value,
+        timeZone: form.timeZone.value,
+        messageContent: form.messageContent.value,
+        isIRSScam: form.isIRSScam.checked
+      };
 
-      if (response.ok) {
-        const result = await response.json();
-        document.getElementById('emailTo').innerText = result.abuseEmails.join(', ');
-        document.getElementById('emailSubject').innerText = result.emailSubject;
-        document.getElementById('emailBody').value = result.emailBody;
-        document.getElementById('result').style.display = 'block';
+      try {
+        const response = await fetch('/submit-report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        });
 
-        this.reset(); // Reset the form after submit
-      } else {
-        alert('Failed to generate report.');
+        const data = await response.json();
+
+        if (data.manualAction) {
+          document.getElementById('manualMessage').style.display = 'block';
+          document.getElementById('manualMessage').innerText = `⚠️ No known abuse contact found for "${data.provider}". Please report manually.`;
+          document.getElementById('result').innerHTML = '';
+        } else {
+          document.getElementById('manualMessage').style.display = 'none';
+          document.getElementById('result').innerHTML = `
+            <h3>Report Ready</h3>
+            <p><strong>To:</strong> ${data.abuseEmails.join(', ')}</p>
+            <p><strong>CC:</strong> ${data.ccEmails.join(', ')}</p>
+            <p><strong>Subject:</strong> ${data.emailSubject}</p>
+            <p><strong>Body:</strong></p>
+            <pre>${data.emailBody}</pre>
+          `;
+        }
+
+        // Reset the form for new report
+        form.reset();
+        form.countryCode.value = "+1"; // reset country code to default
+      } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred while submitting the report.');
       }
-    });
-
-    document.getElementById('copyEmail').addEventListener('click', function() {
-      document.getElementById('emailBody').select();
-      document.execCommand('copy');
-      alert('Email copied to clipboard!');
-    });
-
-    document.getElementById('downloadEML').addEventListener('click', function() {
-      const to = document.getElementById('emailTo').innerText;
-      const subject = document.getElementById('emailSubject').innerText;
-      const body = document.getElementById('emailBody').value;
-      const emlContent = `To: ${to}\nSubject: ${subject}\n\n${body}`;
-      const blob = new Blob([emlContent], { type: 'message/rfc822' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = 'spam_report.eml';
-      link.click();
-    });
-
-    document.getElementById('openGmail').addEventListener('click', function() {
-      const to = document.getElementById('emailTo').innerText;
-      const subject = encodeURIComponent(document.getElementById('emailSubject').innerText);
-      const body = encodeURIComponent(document.getElementById('emailBody').value);
-      window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${to}&su=${subject}&body=${body}`, '_blank');
-    });
-
-    document.getElementById('openOutlook').addEventListener('click', function() {
-      const to = document.getElementById('emailTo').innerText;
-      const subject = encodeURIComponent(document.getElementById('emailSubject').innerText);
-      const body = encodeURIComponent(document.getElementById('emailBody').value);
-      window.open(`https://outlook.live.com/owa/?path=/mail/action/compose&to=${to}&subject=${subject}&body=${body}`, '_blank');
     });
   </script>
 </body>
