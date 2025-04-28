@@ -1,4 +1,3 @@
-// Updated server.js with country code input and better reset behavior
 const express = require('express');
 const fetch = require('node-fetch');
 require('dotenv').config();
@@ -12,6 +11,8 @@ app.use(express.static('public'));
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/public/index.html');
 });
+
+// Full abuse contacts list
 const abuseContacts = {
   "Enflick": ["abuse@enflick.com", "abuse@textnow.com"],
   "TextNow": ["abuse@textnow.com", "abuse@enflick.com"],
@@ -41,7 +42,7 @@ const abuseContacts = {
   "Blitz Telecom": ["crm@blitztelus.com", "investigate@blitztelecomservices.com"],
   "Brightlink Communications": ["noc@brightlink.com"],
   "Broadview": ["fraudmailbox@windstream.com"],
-  "Broadvox": ["abuse@onvoy.com"], 
+  "Broadvox": ["abuse@onvoy.com"],
   "Callture": ["support@callture.com"],
   "Cavalier Telephone": ["Windstream.NetworkAbuse@Windstream.com"],
   "CenturyLink": ["security.feedback@level3.com", "abuse@level3.com", "abuse@centurylink.com", "support@centurylink.com"],
@@ -93,10 +94,8 @@ const abuseContacts = {
   "TollFreeForwarding.com": ["support@tollfreeforwarding.com"],
   "USA Mobility Wireless, Inc.": ["customer.care@spok.com"],
   "Vonage": ["abuse@vonage.com", "phishing@vonage.com"],
-  "ZipWhip": ["supportlist@zipwhip.com", "support@zipwhip.com", "reportabuse@zipwhip.com"],
-  "Bell Mobility Inc.": ["abuse@bell.ca"]
+  "ZipWhip": ["supportlist@zipwhip.com", "support@zipwhip.com", "reportabuse@zipwhip.com"]
 };
-
 const prettyNumber = (num) => {
   const n = num.replace(/\D/g, '');
   if (n.length === 10) {
@@ -106,6 +105,16 @@ const prettyNumber = (num) => {
   } else {
     return num;
   }
+};
+
+const findClosestAbuseContact = (carrierName) => {
+  carrierName = carrierName.toLowerCase();
+  for (const key in abuseContacts) {
+    if (carrierName.includes(key.toLowerCase()) || key.toLowerCase().includes(carrierName)) {
+      return abuseContacts[key];
+    }
+  }
+  return [`abuse@${carrierName.replace(/\s/g, '').toLowerCase()}.com`];
 };
 
 app.post('/submit-report', async (req, res) => {
@@ -118,7 +127,8 @@ app.post('/submit-report', async (req, res) => {
     date,
     time,
     timeZone,
-    messageContent
+    messageContent,
+    isIRSScam
   } = req.body;
 
   try {
@@ -128,8 +138,15 @@ app.post('/submit-report', async (req, res) => {
     const lookupData = await lookupResponse.json();
 
     const provider = lookupData.carrier || 'Unknown Carrier';
+    let abuseEmails = findClosestAbuseContact(provider);
 
-    const abuseEmails = abuseContacts[provider] || [`abuse@${provider.toLowerCase().replace(/\s/g, '')}.com`];
+    // Always CC potentialviolation@usac.org
+    abuseEmails.push('potentialviolation@usac.org');
+
+    // If IRS Scam box is checked
+    if (isIRSScam === 'on' || isIRSScam === true) {
+      abuseEmails.push('phishing@irs.gov');
+    }
 
     const emailSubject = `Fraud Operators Using ${provider} Network (${prettyNumber(offendingNumber)})`;
     const emailBody = `
@@ -140,7 +157,9 @@ Fraudulent scam operation using this number ${prettyNumber(offendingNumber)}.
 This ${provider} customer is using your network for Fraud/Scam operations. Please cancel this customer using this line ${prettyNumber(offendingNumber)}, and all lines associated with them.
 
 They texted my number ${prettyNumber(phoneNumber)} at ${time} ${timeZone} on ${date}.
-${messageContent ? `Message Content:\n\"${messageContent}\"\n` : ''}
+
+${messageContent ? `Message Content:\n"${messageContent}"\n` : ''}
+
 Thank you for your commitment to keeping criminals from using the ${provider} network for their criminal operations.
 
 -${name}
@@ -155,11 +174,12 @@ Thank you for your commitment to keeping criminals from using the ${provider} ne
 
   } catch (error) {
     console.error('Error preparing report:', error);
-    res.status(500).json({message: "Failed to prepare report."});
+    res.status(500).json({ message: "Failed to prepare report." });
   }
 });
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
 

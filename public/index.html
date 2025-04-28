@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Spam Text Message Reporter</title>
 </head>
 <body>
-  <h1>Report Spam Text Message</h1>
+  <h1>Report a Spam Text Message</h1>
+
   <form id="reportForm">
     <label for="name">Your Name:</label><br>
     <input type="text" id="name" name="name" required><br><br>
@@ -14,138 +14,114 @@
     <label for="email">Your Email:</label><br>
     <input type="email" id="email" name="email" required><br><br>
 
-    <label for="phoneNumber">Your Phone Number:</label><br>
+    <label for="phoneNumber">Your Phone Number (your number):</label><br>
     <input type="text" id="phoneNumber" name="phoneNumber" required><br><br>
 
-<label for="countryCode">Country Code:</label><br>
-<select id="countryCode" name="countryCode" required>
-  <option value="+1">🇺🇸 United States (+1)</option>
-  <option value="+1">🇨🇦 Canada (+1)</option>
-  <option value="+44">🇬🇧 United Kingdom (+44)</option>
-  <option value="+61">🇦🇺 Australia (+61)</option>
-  <option value="+91">🇮🇳 India (+91)</option>
-  <option value="+81">🇯🇵 Japan (+81)</option>
-  <option value="+49">🇩🇪 Germany (+49)</option>
-  <option value="+33">🇫🇷 France (+33)</option>
-  <option value="+39">🇮🇹 Italy (+39)</option>
-  <option value="+34">🇪🇸 Spain (+34)</option>
-  <option value="+86">🇨🇳 China (+86)</option>
-  <option value="+82">🇰🇷 South Korea (+82)</option>
-  <option value="+7">🇷🇺 Russia (+7)</option>
-  <option value="+55">🇧🇷 Brazil (+55)</option>
-  <option value="+52">🇲🇽 Mexico (+52)</option>
-  <option value="+27">🇿🇦 South Africa (+27)</option>
-  <option value="+46">🇸🇪 Sweden (+46)</option>
-  <option value="+47">🇳🇴 Norway (+47)</option>
-  <option value="+31">🇳🇱 Netherlands (+31)</option>
-  <option value="+41">🇨🇭 Switzerland (+41)</option>
-  <option value="+48">🇵🇱 Poland (+48)</option>
-  <option value="+351">🇵🇹 Portugal (+351)</option>
-  <option value="+65">🇸🇬 Singapore (+65)</option>
-  <option value="+63">🇵🇭 Philippines (+63)</option>
-  <option value="+20">🇪🇬 Egypt (+20)</option>
-  <option value="+90">🇹🇷 Turkey (+90)</option>
-  <option value="+64">🇳🇿 New Zealand (+64)</option>
-  <option value="+45">🇩🇰 Denmark (+45)</option>
-  <option value="+32">🇧🇪 Belgium (+32)</option>
-  <option value="+43">🇦🇹 Austria (+43)</option>
-  <option value="+60">🇲🇾 Malaysia (+60)</option>
-  <option value="+66">🇹🇭 Thailand (+66)</option>
-  <option value="+62">🇮🇩 Indonesia (+62)</option>
-  <option value="+353">🇮🇪 Ireland (+353)</option>
-  <option value="+358">🇫🇮 Finland (+358)</option>
-  <option value="+420">🇨🇿 Czech Republic (+420)</option>
-  <option value="+421">🇸🇰 Slovakia (+421)</option>
-  <option value="+36">🇭🇺 Hungary (+36)</option>
-  <option value="+972">🇮🇱 Israel (+972)</option>
-  <option value="+30">🇬🇷 Greece (+30)</option>
-  <option value="+353">🇮🇪 Ireland (+353)</option>
-  <option value="+370">🇱🇹 Lithuania (+370)</option>
-  <option value="+371">🇱🇻 Latvia (+371)</option>
-  <option value="+372">🇪🇪 Estonia (+372)</option>
-  <option value="+48">🇵🇱 Poland (+48)</option>
-</select><br><br>
+    <label for="countryCode">Country Code:</label><br>
+    <select id="countryCode" name="countryCode" required>
+      <option value="+1" selected>🇺🇸 United States (+1)</option>
+      <option value="+1">🇨🇦 Canada (+1)</option>
+      <option value="+44">🇬🇧 United Kingdom (+44)</option>
+      <option value="+61">🇦🇺 Australia (+61)</option>
+      <option value="+91">🇮🇳 India (+91)</option>
+      <option value="+81">🇯🇵 Japan (+81)</option>
+      <option value="+49">🇩🇪 Germany (+49)</option>
+      <option value="+33">🇫🇷 France (+33)</option>
+      <!-- you can add more countries if you want -->
+    </select><br><br>
 
-
-    <label for="offendingNumber">Offending Number:</label><br>
+    <label for="offendingNumber">Offending Number (spammer):</label><br>
     <input type="text" id="offendingNumber" name="offendingNumber" required><br><br>
 
-    <label for="date">Date Message Received:</label><br>
+    <label for="date">Date message was received:</label><br>
     <input type="date" id="date" name="date" required><br><br>
 
-    <label for="time">Time Message Received:</label><br>
+    <label for="time">Time message was received:</label><br>
     <input type="time" id="time" name="time" required><br><br>
 
-    <label for="timeZone">Your Time Zone:</label><br>
+    <label for="timeZone">Time Zone:</label><br>
     <input type="text" id="timeZone" name="timeZone" placeholder="e.g., EST, PST" required><br><br>
 
     <label for="messageContent">Message Content (optional):</label><br>
     <textarea id="messageContent" name="messageContent" rows="4" cols="50"></textarea><br><br>
 
+    <label for="isIRSScam">
+      <input type="checkbox" id="isIRSScam" name="isIRSScam">
+      This was an IRS scam.
+    </label><br><br>
+
     <button type="submit">Submit Report</button>
   </form>
 
-  <div id="resultArea" style="margin-top: 30px;"></div>
+  <div id="result" style="display:none;">
+    <h2>Email Ready to Send!</h2>
+    <p><strong>To:</strong> <span id="emailTo"></span></p>
+    <p><strong>Subject:</strong> <span id="emailSubject"></span></p>
+    <p><strong>Body:</strong></p>
+    <textarea id="emailBody" rows="15" cols="80"></textarea><br><br>
+
+    <button id="copyEmail">Copy Email</button>
+    <button id="downloadEML">Download .eml File</button>
+    <button id="openGmail">Open in Gmail</button>
+    <button id="openOutlook">Open in Outlook/Hotmail</button>
+  </div>
 
   <script>
-    const form = document.getElementById('reportForm');
-    const resultArea = document.getElementById('resultArea');
-
-    form.addEventListener('submit', async (e) => {
+    document.getElementById('reportForm').addEventListener('submit', async function(e) {
       e.preventDefault();
-
-      const formData = new FormData(form);
-      const payload = Object.fromEntries(formData.entries());
+      const formData = new FormData(this);
+      const data = Object.fromEntries(formData.entries());
 
       const response = await fetch('/submit-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(data)
       });
 
       if (response.ok) {
-        const data = await response.json();
+        const result = await response.json();
+        document.getElementById('emailTo').innerText = result.abuseEmails.join(', ');
+        document.getElementById('emailSubject').innerText = result.emailSubject;
+        document.getElementById('emailBody').value = result.emailBody;
+        document.getElementById('result').style.display = 'block';
 
-        resultArea.innerHTML = `
-          <h3>Report Prepared</h3>
-          <p><strong>Provider:</strong> ${data.provider}</p>
-          <p><strong>Subject:</strong> ${data.emailSubject}</p>
-          <textarea id="emailBody" rows="10" cols="80">${data.emailBody}</textarea><br><br>
-          <button onclick="copyToClipboard()">Copy Email</button>
-          <button onclick="downloadEML('${data.emailSubject}', \`${data.emailBody}\`)">Download .eml</button>
-          <button onclick="openGmail('${data.abuseEmails.join(',')}', '${encodeURIComponent(data.emailSubject)}', '${encodeURIComponent(data.emailBody)}')">Open in Gmail</button>
-          <button onclick="openHotmail('${data.abuseEmails.join(',')}', '${encodeURIComponent(data.emailSubject)}', '${encodeURIComponent(data.emailBody)}')">Open in Hotmail</button>
-        `;
-
-        form.reset();
+        this.reset(); // Reset the form after submit
       } else {
-        resultArea.innerHTML = `<p style="color:red;">Failed to generate report.</p>`;
+        alert('Failed to generate report.');
       }
     });
 
-    function copyToClipboard() {
-      const textArea = document.getElementById('emailBody');
-      textArea.select();
+    document.getElementById('copyEmail').addEventListener('click', function() {
+      document.getElementById('emailBody').select();
       document.execCommand('copy');
       alert('Email copied to clipboard!');
-    }
+    });
 
-    function downloadEML(subject, body) {
-      const emlContent = `Subject: ${subject}\n\n${body}`;
-      const blob = new Blob([emlContent], { type: 'text/plain' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'spam_report.eml';
-      a.click();
-    }
+    document.getElementById('downloadEML').addEventListener('click', function() {
+      const to = document.getElementById('emailTo').innerText;
+      const subject = document.getElementById('emailSubject').innerText;
+      const body = document.getElementById('emailBody').value;
+      const emlContent = `To: ${to}\nSubject: ${subject}\n\n${body}`;
+      const blob = new Blob([emlContent], { type: 'message/rfc822' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'spam_report.eml';
+      link.click();
+    });
 
-    function openGmail(to, subject, body) {
+    document.getElementById('openGmail').addEventListener('click', function() {
+      const to = document.getElementById('emailTo').innerText;
+      const subject = encodeURIComponent(document.getElementById('emailSubject').innerText);
+      const body = encodeURIComponent(document.getElementById('emailBody').value);
       window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${to}&su=${subject}&body=${body}`, '_blank');
-    }
+    });
 
-    function openHotmail(to, subject, body) {
+    document.getElementById('openOutlook').addEventListener('click', function() {
+      const to = document.getElementById('emailTo').innerText;
+      const subject = encodeURIComponent(document.getElementById('emailSubject').innerText);
+      const body = encodeURIComponent(document.getElementById('emailBody').value);
       window.open(`https://outlook.live.com/owa/?path=/mail/action/compose&to=${to}&subject=${subject}&body=${body}`, '_blank');
-    }
+    });
   </script>
 </body>
 </html>
