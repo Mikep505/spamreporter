@@ -1,85 +1,113 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Report Spam Text Message</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spam Text Message Reporter</title>
 </head>
 <body>
-    <h1>Report a Spam Text Message</h1>
-    <form id="spamReportForm">
-        <label>Name: <input type="text" name="name" required></label><br>
-        <label>Email: <input type="email" name="email" required></label><br>
-        <label>Your Phone Number: <input type="text" name="phoneNumber" required></label><br>
-        <label>Offending Number: <input type="text" name="offendingNumber" required></label><br>
-        <label>Date Sent: <input type="date" name="date" required></label><br>
-        <label>Time Sent: <input type="time" name="time" required></label><br>
-        <label>Time Zone: <input type="text" name="timeZone" placeholder="e.g. EST, PST" required></label><br>
-        <label>Message Content (optional):<br>
-            <textarea name="messageContent" rows="4" cols="50"></textarea>
-        </label><br><br>
-        <button type="submit">Submit Report</button>
-    </form>
+  <h1>Report Spam Text Message</h1>
+  <form id="reportForm">
+    <label for="name">Your Name:</label><br>
+    <input type="text" id="name" name="name" required><br><br>
 
-    <div id="response" style="margin-top: 30px;"></div>
+    <label for="email">Your Email:</label><br>
+    <input type="email" id="email" name="email" required><br><br>
 
-    <script>
-        document.getElementById('spamReportForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData.entries());
-            
-            const response = await fetch('/submit-report', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
-            });
+    <label for="phoneNumber">Your Phone Number:</label><br>
+    <input type="text" id="phoneNumber" name="phoneNumber" required><br><br>
 
-            const result = await response.json();
+    <label for="countryCode">Country Code:</label><br>
+    <select id="countryCode" name="countryCode" required>
+      <option value="+1">🇺🇸 United States (+1)</option>
+      <option value="+1">🇨🇦 Canada (+1)</option>
+      <option value="+44">🇬🇧 United Kingdom (+44)</option>
+      <option value="+61">🇦🇺 Australia (+61)</option>
+      <option value="+91">🇮🇳 India (+91)</option>
+      <option value="+81">🇯🇵 Japan (+81)</option>
+      <!-- Add more countries if needed -->
+    </select><br><br>
 
-            const abuseList = result.abuseEmails.join(", ");
-            const copyText = `To: ${abuseList}\\nSubject: ${result.emailSubject}\\n\\n${result.emailBody}`;
+    <label for="offendingNumber">Offending Number:</label><br>
+    <input type="text" id="offendingNumber" name="offendingNumber" required><br><br>
 
-            document.getElementById('response').innerHTML = `
-                <h2>Ready to Report</h2>
-                <p><strong>Carrier:</strong> <span id="provider">${result.provider}</span></p>
-                <p><strong>Send this email to:</strong> <span id="abuseList">${abuseList}</span></p>
-                <p><strong>Subject:</strong> <span id="emailSubject">${result.emailSubject}</span></p>
-                <textarea id="emailBody" rows="15" cols="80">${result.emailBody}</textarea><br><br>
-                <button onclick="copyEmail()">Copy Email Text</button>
-                <button onclick="downloadEML()">Download .eml File</button>
-            `;
+    <label for="date">Date Message Received:</label><br>
+    <input type="date" id="date" name="date" required><br><br>
 
-            window.copyEmail = function() {
-                const textarea = document.getElementById('emailBody');
-                textarea.select();
-                document.execCommand('copy');
-                alert('Email text copied to clipboard! Paste it into your own email app.');
-            };
+    <label for="time">Time Message Received:</label><br>
+    <input type="time" id="time" name="time" required><br><br>
 
-            window.downloadEML = function() {
-                const abuseList = document.getElementById('abuseList').textContent;
-                const subject = document.getElementById('emailSubject').textContent;
-                const body = document.getElementById('emailBody').value;
+    <label for="timeZone">Your Time Zone:</label><br>
+    <input type="text" id="timeZone" name="timeZone" placeholder="e.g., EST, PST" required><br><br>
 
-                const emlContent = [
-                    "To: " + abuseList,
-                    "Subject: " + subject,
-                    "Content-Type: text/plain; charset=UTF-8",
-                    "",
-                    body
-                ].join("\\r\\n");
+    <label for="messageContent">Message Content (optional):</label><br>
+    <textarea id="messageContent" name="messageContent" rows="4" cols="50"></textarea><br><br>
 
-                const blob = new Blob([emlContent], { type: "message/rfc822" });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = "spam_report.eml";
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-            };
-        });
-    </script>
+    <button type="submit">Submit Report</button>
+  </form>
+
+  <div id="resultArea" style="margin-top: 30px;"></div>
+
+  <script>
+    const form = document.getElementById('reportForm');
+    const resultArea = document.getElementById('resultArea');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(form);
+      const payload = Object.fromEntries(formData.entries());
+
+      const response = await fetch('/submit-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+
+        resultArea.innerHTML = `
+          <h3>Report Prepared</h3>
+          <p><strong>Provider:</strong> ${data.provider}</p>
+          <p><strong>Subject:</strong> ${data.emailSubject}</p>
+          <textarea id="emailBody" rows="10" cols="80">${data.emailBody}</textarea><br><br>
+          <button onclick="copyToClipboard()">Copy Email</button>
+          <button onclick="downloadEML('${data.emailSubject}', \`${data.emailBody}\`)">Download .eml</button>
+          <button onclick="openGmail('${data.abuseEmails.join(',')}', '${encodeURIComponent(data.emailSubject)}', '${encodeURIComponent(data.emailBody)}')">Open in Gmail</button>
+          <button onclick="openHotmail('${data.abuseEmails.join(',')}', '${encodeURIComponent(data.emailSubject)}', '${encodeURIComponent(data.emailBody)}')">Open in Hotmail</button>
+        `;
+
+        form.reset();
+      } else {
+        resultArea.innerHTML = `<p style="color:red;">Failed to generate report.</p>`;
+      }
+    });
+
+    function copyToClipboard() {
+      const textArea = document.getElementById('emailBody');
+      textArea.select();
+      document.execCommand('copy');
+      alert('Email copied to clipboard!');
+    }
+
+    function downloadEML(subject, body) {
+      const emlContent = `Subject: ${subject}\n\n${body}`;
+      const blob = new Blob([emlContent], { type: 'text/plain' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'spam_report.eml';
+      a.click();
+    }
+
+    function openGmail(to, subject, body) {
+      window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${to}&su=${subject}&body=${body}`, '_blank');
+    }
+
+    function openHotmail(to, subject, body) {
+      window.open(`https://outlook.live.com/owa/?path=/mail/action/compose&to=${to}&subject=${subject}&body=${body}`, '_blank');
+    }
+  </script>
 </body>
 </html>
 
