@@ -1,11 +1,21 @@
 const express = require('express');
 const fetch = require('node-fetch');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
-const abuseContacts = require('./abuseContacts');
+const abuseContacts = require('./abuseContacts'); // separate big file
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Global Rate Limiter (5 requests per minute per IP)
+const limiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 5, // limit each IP to 5 requests per minute
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use(limiter);
 app.use(express.json());
 app.use(express.static('public'));
 
