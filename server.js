@@ -39,6 +39,7 @@ const abuseContacts = {
   "Ameritech Illinois": ["abuse@att.net"],
   "AT&T": ["abuse@att.net"],
   "Astound Broadband": ["customerservice@wavebroadband.com"],
+  "Bell Mobility Inc.": ["abuse@bell.ca"],
   "Blitz Telecom": ["crm@blitztelus.com", "investigate@blitztelecomservices.com"],
   "Brightlink Communications": ["noc@brightlink.com"],
   "Broadview": ["fraudmailbox@windstream.com"],
