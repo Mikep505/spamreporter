@@ -15,7 +15,7 @@ const limiter = rateLimit({
   legacyHeaders: false,
 });
 
-app.set('trust proxy', true); // fix X-Forwarded-For error behind proxies
+app.set('trust proxy', true); // Important fix for Render
 app.use(limiter);
 app.use(express.json());
 app.use(express.static('public'));
@@ -43,14 +43,14 @@ const normalizeName = (name) => {
   return name.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
 };
 
-// Build normalized abuse contacts map
+// ✅ Normalize the abuse contacts at startup
 const abuseContacts = {};
 for (const carrier in abuseContactsRaw) {
   const normalizedCarrier = normalizeName(carrier);
   abuseContacts[normalizedCarrier] = abuseContactsRaw[carrier];
 }
 
-// Find closest matching carrier abuse contact
+// Find best matching carrier
 const findClosestAbuseContact = (carrierName) => {
   const normalizedCarrier = normalizeName(carrierName);
 
@@ -59,7 +59,6 @@ const findClosestAbuseContact = (carrierName) => {
     return abuseContacts[normalizedCarrier];
   }
 
-  // Fuzzy match: carrier name partially includes contact name
   for (const key in abuseContacts) {
     if (normalizedCarrier.includes(key) || key.includes(normalizedCarrier)) {
       console.log(`🔎 Fuzzy match: "${normalizedCarrier}" ≈ "${key}"`);
@@ -104,7 +103,6 @@ app.post('/submit-report', async (req, res) => {
 
     let provider = 'Unknown Carrier';
 
-    // Lookup carrier using CarrierLookup first, fallback to NumVerify
     try {
       const carrierLookupResponse = await fetch(`https://www.carrierlookup.com/api/lookup?key=${process.env.CARRIERLOOKUP_API_KEY}&number=${encodeURIComponent(cleanOffendingNumber)}`);
       const carrierLookupData = await carrierLookupResponse.json();
@@ -135,10 +133,8 @@ app.post('/submit-report', async (req, res) => {
     console.log(`Carrier lookup result: ${provider}`);
     console.log(`Abuse contact found:`, abuseEmails || 'None');
 
-    // Always CC USAC
     const ccEmails = ['potentialviolation@usac.org'];
 
-    // Add IRS if needed
     if (isIRSScam === 'on' || isIRSScam === true) {
       ccEmails.push('phishing@irs.gov');
     }
