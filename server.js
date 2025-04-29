@@ -15,7 +15,7 @@ const limiter = rateLimit({
   legacyHeaders: false,
 });
 
-app.set('trust proxy', 1); // Needed for Render, otherwise Express-rate-limit complains
+app.set('trust proxy', 1); // Needed for Render
 app.use(limiter);
 app.use(express.json());
 app.use(express.static('public'));
@@ -24,13 +24,11 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/public/index.html');
 });
 
-// Helper to sanitize user inputs
 const sanitizeInput = (input, maxLength = 500) => {
   if (typeof input !== 'string') return '';
   return input.replace(/[<>"']/g, '').substring(0, maxLength).trim();
 };
 
-// Helper to format phone numbers nicely
 const prettyNumber = (num) => {
   const n = num.replace(/\D/g, '');
   if (n.length === 10) {
@@ -42,12 +40,10 @@ const prettyNumber = (num) => {
   }
 };
 
-// Normalize carrier names for matching
 const normalizeName = (name) => {
   return name.toLowerCase().replace(/[^a-z0-9]/g, '');
 };
 
-// Smarter matching: exact match first, then partial best match
 const findClosestAbuseContact = (carrierName) => {
   const normalizedCarrier = normalizeName(carrierName);
   let bestMatch = null;
@@ -61,7 +57,6 @@ const findClosestAbuseContact = (carrierName) => {
       return abuseContacts[key];
     }
 
-    // Check if one string contains another
     if (normalizedCarrier.includes(normalizedKey) || normalizedKey.includes(normalizedCarrier)) {
       const distance = Math.abs(normalizedCarrier.length - normalizedKey.length);
       if (distance < shortestDistance) {
@@ -141,8 +136,16 @@ app.post('/submit-report', async (req, res) => {
 
     let abuseEmails = findClosestAbuseContact(provider);
 
+    // ➡️ Fallback if no abuse contact
+    if (!abuseEmails && provider !== 'Unknown Carrier') {
+      const fallbackDomain = normalizeName(provider).replace(/[^a-z0-9]/g, '') + '.com';
+      const guessedEmail = `abuse@${fallbackDomain}`;
+      console.log(`🤖 Guessing fallback abuse email: ${guessedEmail}`);
+      abuseEmails = [guessedEmail];
+    }
+
     console.log(`Carrier lookup result: ${provider}`);
-    console.log('Abuse contact found:', abuseEmails ? abuseEmails : 'None');
+    console.log('Abuse contact used:', abuseEmails ? abuseEmails : 'None');
 
     const ccEmails = ['potentialviolation@usac.org'];
     if (isIRSScam === 'on' || isIRSScam === true) {
@@ -165,18 +168,6 @@ Thank you for your commitment to keeping criminals from using the ${provider} ne
 
 -${sanitizedName}
     `.trim();
-
-    if (!abuseEmails) {
-      return res.json({
-        abuseEmails: [],
-        ccEmails,
-        emailSubject,
-        emailBody,
-        provider,
-        manualAction: true,
-        message: `⚠️ No known abuse contact found for "${provider}". Please report manually.`
-      });
-    }
 
     res.json({
       abuseEmails,
