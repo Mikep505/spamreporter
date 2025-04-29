@@ -49,15 +49,14 @@ const normalizeName = (name) => {
 // Find best abuse contact based on carrier name
 const findClosestAbuseContact = (carrierName) => {
   const normalizedCarrier = normalizeName(carrierName);
-  
+
   for (const key in abuseContacts) {
     const normalizedKey = normalizeName(key);
     if (normalizedCarrier === normalizedKey || normalizedCarrier.includes(normalizedKey) || normalizedKey.includes(normalizedCarrier)) {
       return abuseContacts[key];
     }
   }
-  // No match found
-  return null; // ✅ No fallback guessing anymore
+  return null; // ✅ No guessing anymore
 };
 
 app.post('/submit-report', async (req, res) => {
@@ -91,6 +90,9 @@ app.post('/submit-report', async (req, res) => {
 
     const provider = lookupData.carrier || 'Unknown Carrier';
     let abuseEmails = findClosestAbuseContact(provider);
+
+    // Log the lookup for debugging
+    console.log(`Carrier lookup: ${provider}, Abuse Contact Found:`, abuseEmails || 'None');
 
     // Always CC USAC reporting
     const ccEmails = ['potentialviolation@usac.org'];

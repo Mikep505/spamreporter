@@ -6,14 +6,17 @@
   <title>Spam Text Message Reporter</title>
 </head>
 <body>
-  <h1>Report Spam Text Message</h1>
+<h1>Report Scam/Fraud Text Message</h1>
 
-  <p>
-    Have you ever received text messages from unknown numbers that try to seem familiar, like "how have you been?" or "what time are you picking me up?"  
-    These are called <strong>smishing texts</strong> — phishing attacks via SMS.  
-    This form makes it easy to report these numbers and get them investigated and canceled.  
-    Don't worry about reporting legitimate wrong-number texts — the carrier can tell the difference!
-  </p>
+<p>
+  Have you ever received strange text messages from unknown numbers saying things like "How have you been?" or "What time are you picking me up?"?<br><br>
+
+  These are called <strong>smishing attacks</strong> — like phishing, but delivered through SMS.<br><br>
+
+  This form provides a fast, easy way to report suspicious numbers so that carriers can investigate and shut them down.<br><br>
+
+  Don’t worry about accidentally reporting legitimate wrong-number texts — carriers are able to distinguish fraud from genuine messages.
+</p>
 
   <form id="reportForm">
     <label>Name:<br><input type="text" name="name" required></label><br><br>
@@ -30,7 +33,6 @@
         <option value="+49">🇩🇪 Germany (+49)</option>
         <option value="+33">🇫🇷 France (+33)</option>
         <option value="+91">🇮🇳 India (+91)</option>
-        <!-- Add more countries as needed -->
       </select>
     </label><br><br>
 
@@ -54,7 +56,10 @@
   <hr>
 
   <div id="manualMessage" style="display:none; color: red; font-weight: bold; margin-top:20px;"></div>
+
   <div id="result" style="margin-top:20px;"></div>
+  <button id="copyButton" style="display:none;">Copy Email to Clipboard</button>
+  <a id="gmailLink" style="display:none; margin-left:10px;" target="_blank">Send via Gmail</a>
 
   <script>
     const form = document.getElementById('reportForm');
@@ -88,6 +93,8 @@
           document.getElementById('manualMessage').style.display = 'block';
           document.getElementById('manualMessage').innerText = `⚠️ No known abuse contact found for "${data.provider}". Please report manually.`;
           document.getElementById('result').innerHTML = '';
+          document.getElementById('copyButton').style.display = 'none';
+          document.getElementById('gmailLink').style.display = 'none';
         } else {
           document.getElementById('manualMessage').style.display = 'none';
           document.getElementById('result').innerHTML = `
@@ -96,17 +103,34 @@
             <p><strong>CC:</strong> ${data.ccEmails.join(', ')}</p>
             <p><strong>Subject:</strong> ${data.emailSubject}</p>
             <p><strong>Body:</strong></p>
-            <pre>${data.emailBody}</pre>
+            <pre id="emailBody">${data.emailBody}</pre>
           `;
+
+          document.getElementById('copyButton').style.display = 'inline-block';
+          document.getElementById('gmailLink').style.display = 'inline-block';
+
+          // Setup Gmail Link
+          const mailtoSubject = encodeURIComponent(data.emailSubject);
+          const mailtoBody = encodeURIComponent(data.emailBody);
+          const mailtoTo = encodeURIComponent(data.abuseEmails.join(','));
+          const mailtoCc = encodeURIComponent(data.ccEmails.join(','));
+          document.getElementById('gmailLink').href = `https://mail.google.com/mail/?view=cm&fs=1&to=${mailtoTo}&cc=${mailtoCc}&su=${mailtoSubject}&body=${mailtoBody}`;
         }
 
-        // Reset the form for new report
         form.reset();
-        form.countryCode.value = "+1"; // reset country code to default
+        form.countryCode.value = "+1";
       } catch (error) {
         console.error('Error:', error);
         alert('An error occurred while submitting the report.');
       }
+    });
+
+    // Copy email body to clipboard
+    document.getElementById('copyButton').addEventListener('click', () => {
+      const emailBody = document.getElementById('emailBody').innerText;
+      navigator.clipboard.writeText(emailBody)
+        .then(() => alert('Email body copied to clipboard!'))
+        .catch(err => console.error('Copy failed', err));
     });
   </script>
 </body>
