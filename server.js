@@ -56,7 +56,7 @@ const findClosestAbuseContact = (carrierName) => {
       return abuseContacts[key];
     }
   }
-  return null; // ✅ No guessing anymore
+  return null; // No guessing
 };
 
 app.post('/submit-report', async (req, res) => {
@@ -88,21 +88,23 @@ app.post('/submit-report', async (req, res) => {
 
     let provider = 'Unknown Carrier';
 
-    // Try CarrierLookup first, fallback to NumVerify if needed
+    let carrierLookupData = null;
+    let numverifyData = null;
+
     try {
       const carrierLookupResponse = await fetch(`https://www.carrierlookup.com/api/lookup?key=${process.env.CARRIERLOOKUP_API_KEY}&number=${encodeURIComponent(cleanOffendingNumber)}`);
-      const carrierLookupData = await carrierLookupResponse.json();
+      carrierLookupData = await carrierLookupResponse.json();
 
       console.log('📦 CarrierLookup raw response:', JSON.stringify(carrierLookupData, null, 2));
 
-      if (carrierLookupData && carrierLookupData.Response && carrierLookupData.Response.carrier) {
+      if (carrierLookupData && carrierLookupData.Response && carrierLookupData.Response.carrier && carrierLookupData.Response.carrier.toLowerCase() !== "unknown") {
         provider = carrierLookupData.Response.carrier;
         console.log(`✅ Found provider from CarrierLookup: ${provider}`);
       } else {
-        console.warn('⚠️ CarrierLookup did not return a carrier, trying NumVerify...');
-        
+        console.warn('⚠️ CarrierLookup did not return a valid carrier, trying NumVerify...');
+
         const numverifyResponse = await fetch(`http://apilayer.net/api/validate?access_key=${process.env.NUMVERIFY_API_KEY}&number=${encodeURIComponent(fullNumber)}`);
-        const numverifyData = await numverifyResponse.json();
+        numverifyData = await numverifyResponse.json();
 
         console.log('📦 NumVerify raw response:', JSON.stringify(numverifyData, null, 2));
 
@@ -110,7 +112,7 @@ app.post('/submit-report', async (req, res) => {
           provider = numverifyData.carrier;
           console.log(`✅ Found provider from NumVerify: ${provider}`);
         } else {
-          console.error('❌ Both CarrierLookup and NumVerify failed to return carrier.');
+          console.error('❌ Both CarrierLookup and NumVerify failed to return a valid carrier.');
         }
       }
     } catch (lookupError) {
