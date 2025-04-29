@@ -2,7 +2,7 @@ const express = require('express');
 const fetch = require('node-fetch');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
-const abuseContacts = require('./abuseContacts'); // Big carrier contact list
+const abuseContacts = require('./abuseContacts'); // Carrier contacts list
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -83,19 +83,44 @@ app.post('/submit-report', async (req, res) => {
     const sanitizedTimeZone = sanitizeInput(timeZone, 20);
     const sanitizedMessageContent = sanitizeInput(messageContent, 2000);
 
-    const fullNumber = countryCode + sanitizedOffendingNumber.replace(/\D/g, '');
+    const cleanOffendingNumber = sanitizedOffendingNumber.replace(/\D/g, '');
+    const fullNumber = countryCode + cleanOffendingNumber;
 
-    const lookupResponse = await fetch(`http://apilayer.net/api/validate?access_key=${process.env.NUMVERIFY_API_KEY}&number=${encodeURIComponent(fullNumber)}`);
-    const lookupData = await lookupResponse.json();
+    let provider = 'Unknown Carrier';
 
-    const provider = lookupData.carrier || 'Unknown Carrier';
+    // Try CarrierLookup first, fallback to NumVerify if needed
+    try {
+      const carrierLookupResponse = await fetch(`https://www.carrierlookup.com/api/lookup?key=${process.env.CARRIERLOOKUP_API_KEY}&number=${encodeURIComponent(cleanOffendingNumber)}`);
+      const carrierLookupData = await carrierLookupResponse.json();
+
+      console.log('📦 CarrierLookup raw response:', JSON.stringify(carrierLookupData, null, 2));
+
+      if (carrierLookupData && carrierLookupData.Response && carrierLookupData.Response.carrier) {
+        provider = carrierLookupData.Response.carrier;
+        console.log(`✅ Found provider from CarrierLookup: ${provider}`);
+      } else {
+        console.warn('⚠️ CarrierLookup did not return a carrier, trying NumVerify...');
+        
+        const numverifyResponse = await fetch(`http://apilayer.net/api/validate?access_key=${process.env.NUMVERIFY_API_KEY}&number=${encodeURIComponent(fullNumber)}`);
+        const numverifyData = await numverifyResponse.json();
+
+        console.log('📦 NumVerify raw response:', JSON.stringify(numverifyData, null, 2));
+
+        if (numverifyData && numverifyData.carrier) {
+          provider = numverifyData.carrier;
+          console.log(`✅ Found provider from NumVerify: ${provider}`);
+        } else {
+          console.error('❌ Both CarrierLookup and NumVerify failed to return carrier.');
+        }
+      }
+    } catch (lookupError) {
+      console.error('❌ Error during carrier lookup:', lookupError);
+    }
+
     let abuseEmails = findClosestAbuseContact(provider);
 
-    // Log the lookup for debugging
-    console.log(`Carrier lookup: ${provider}, Abuse Contact Found:`, abuseEmails || 'None');
-console.log('Carrier from lookup:', provider);
-console.log('Available abuse contact keys:', Object.keys(abuseContacts));
-
+    console.log(`Carrier lookup result: ${provider}`);
+    console.log(`Abuse contact found:`, abuseEmails || 'None');
 
     // Always CC USAC reporting
     const ccEmails = ['potentialviolation@usac.org'];
@@ -124,6 +149,7 @@ Thank you for your commitment to keeping criminals from using the ${provider} ne
     if (!abuseEmails) {
       return res.json({
         abuseEmails: [],
+        ccEmails,
         emailSubject,
         emailBody,
         provider,
