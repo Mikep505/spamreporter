@@ -2,21 +2,18 @@ const express = require('express');
 const fetch = require('node-fetch');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
-const abuseContacts = require('./abuseContacts'); // Big carrier contact list
+const abuseContactsRaw = require('./abuseContacts'); // Load raw
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Rate Limit: 5 requests per minute
-const limiter = rateLimit({
+app.set('trust proxy', 1);
+app.use(rateLimit({
   windowMs: 1 * 60 * 1000,
   max: 5,
   standardHeaders: true,
   legacyHeaders: false,
-});
-
-app.set('trust proxy', 1); // Fix for X-Forwarded-For on Render
-app.use(limiter);
+}));
 app.use(express.json());
 app.use(express.static('public'));
 
@@ -24,67 +21,47 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/public/index.html');
 });
 
-// Helper to sanitize user inputs
+// Sanitize inputs
 const sanitizeInput = (input, maxLength = 500) => {
   if (typeof input !== 'string') return '';
   return input.replace(/[<>"']/g, '').substring(0, maxLength).trim();
 };
 
-// Helper to format phone numbers nicely
-const prettyNumber = (num) => {
-  const n = num.replace(/\D/g, '');
-  if (n.length === 10) {
-    return `${n.slice(0, 3)}-${n.slice(3, 6)}-${n.slice(6)}`;
-  } else if (n.length === 11 && n.startsWith('1')) {
-    return `${n.slice(1, 4)}-${n.slice(4, 7)}-${n.slice(7)}`;
-  } else {
-    return num;
-  }
-};
-
-// Normalize carrier names for matching
+// Normalize carrier names
 const normalizeName = (name) => {
-  return name.toLowerCase()
-    .replace(/\s+/g, '')        // remove spaces
-    .replace(/[^a-z0-9]/g, ''); // remove non-alphanumeric
+  return name.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
 };
 
-// Build normalized lookup once at startup
-const normalizedAbuseContacts = {};
-for (const key in abuseContacts) {
-  normalizedAbuseContacts[normalizeName(key)] = abuseContacts[key];
+// Build a normalized contacts lookup
+const abuseContacts = {};
+for (const carrier in abuseContactsRaw) {
+  abuseContacts[normalizeName(carrier)] = abuseContactsRaw[carrier];
 }
 
-// Find best abuse contact based on carrier name
+// Find best abuse contact
 const findClosestAbuseContact = (carrierName) => {
   const normalizedCarrier = normalizeName(carrierName);
 
-  if (normalizedAbuseContacts[normalizedCarrier]) {
-    return normalizedAbuseContacts[normalizedCarrier];
+  if (abuseContacts[normalizedCarrier]) {
+    return abuseContacts[normalizedCarrier];
   }
 
   // Fuzzy fallback
-  for (const key in normalizedAbuseContacts) {
+  for (const key in abuseContacts) {
     if (normalizedCarrier.includes(key) || key.includes(normalizedCarrier)) {
-      return normalizedAbuseContacts[key];
+      return abuseContacts[key];
     }
   }
 
   return null;
 };
 
+// POST route
 app.post('/submit-report', async (req, res) => {
   const {
-    name,
-    email,
-    phoneNumber,
-    countryCode,
-    offendingNumber,
-    date,
-    time,
-    timeZone,
-    messageContent,
-    isIRSScam
+    name, email, phoneNumber, countryCode,
+    offendingNumber, date, time, timeZone,
+    messageContent, isIRSScam
   } = req.body;
 
   try {
@@ -102,62 +79,55 @@ app.post('/submit-report', async (req, res) => {
 
     let provider = 'Unknown Carrier';
 
-    // Try CarrierLookup first, fallback to NumVerify if needed
     try {
       const carrierLookupResponse = await fetch(`https://www.carrierlookup.com/api/lookup?key=${process.env.CARRIERLOOKUP_API_KEY}&number=${encodeURIComponent(cleanOffendingNumber)}`);
       const carrierLookupData = await carrierLookupResponse.json();
 
       console.log('📦 CarrierLookup raw response:', JSON.stringify(carrierLookupData, null, 2));
 
-      if (carrierLookupData && carrierLookupData.Response && carrierLookupData.Response.carrier) {
+      if (carrierLookupData?.Response?.carrier) {
         provider = carrierLookupData.Response.carrier;
         console.log(`✅ Found provider from CarrierLookup: ${provider}`);
       } else {
-        console.warn('⚠️ CarrierLookup did not return a carrier, trying NumVerify...');
+        console.warn('⚠️ CarrierLookup failed, trying NumVerify...');
 
         const numverifyResponse = await fetch(`http://apilayer.net/api/validate?access_key=${process.env.NUMVERIFY_API_KEY}&number=${encodeURIComponent(fullNumber)}`);
         const numverifyData = await numverifyResponse.json();
 
         console.log('📦 NumVerify raw response:', JSON.stringify(numverifyData, null, 2));
 
-        if (numverifyData && numverifyData.carrier) {
+        if (numverifyData?.carrier) {
           provider = numverifyData.carrier;
           console.log(`✅ Found provider from NumVerify: ${provider}`);
-        } else {
-          console.error('❌ Both CarrierLookup and NumVerify failed to return carrier.');
         }
       }
     } catch (lookupError) {
-      console.error('❌ Error during carrier lookup:', lookupError);
+      console.error('❌ Lookup error:', lookupError);
     }
 
     console.log(`Normalizing carrier name: "${provider}" → "${normalizeName(provider)}"`);
 
-    let abuseEmails = findClosestAbuseContact(provider);
+    const abuseEmails = findClosestAbuseContact(provider);
+    console.log('Abuse contact found:', abuseEmails || 'None');
 
-    console.log(`Carrier lookup result: ${provider}`);
-    console.log(`Abuse contact found:`, abuseEmails || 'None');
-
-    // Always CC USAC reporting
     const ccEmails = ['potentialviolation@usac.org'];
-
-    // Add IRS reporting if selected
     if (isIRSScam === 'on' || isIRSScam === true) {
       ccEmails.push('phishing@irs.gov');
     }
 
-    const emailSubject = `Fraud Operators Using ${provider} Network (${prettyNumber(sanitizedOffendingNumber)})`;
+    const emailSubject = `Fraud Operators Using ${provider} Network (${cleanOffendingNumber})`;
 
     const emailBody = `
 Hello,
 
-Fraudulent scam operation using this number ${prettyNumber(sanitizedOffendingNumber)}.
+Fraudulent scam operation using this number ${cleanOffendingNumber}.
 
-This ${provider} customer is using your network for Fraud/Scam operations. Please cancel this customer using this line ${prettyNumber(sanitizedOffendingNumber)}, and all lines associated with them.
+This ${provider} customer is using your network for Fraud/Scam operations. Please cancel this customer using this line ${cleanOffendingNumber}, and all lines associated with them.
 
-They texted my number ${prettyNumber(sanitizedPhoneNumber)} at ${sanitizedTime} ${sanitizedTimeZone} on ${sanitizedDate}.
-${sanitizedMessageContent ? `Message Content:\n"${sanitizedMessageContent}"\n` : ''}
-Thank you for your commitment to keeping criminals from using the ${provider} network for their criminal operations.
+They texted my number ${sanitizedPhoneNumber} at ${sanitizedTime} ${sanitizedTimeZone} on ${sanitizedDate}.
+${sanitizedMessageContent ? `Message Content:\n"${sanitizedMessageContent}"` : ''}
+
+Thank you for your commitment to keeping criminals from using the ${provider} network.
 
 -${sanitizedName}
     `.trim();
@@ -185,7 +155,7 @@ Thank you for your commitment to keeping criminals from using the ${provider} ne
 
   } catch (error) {
     console.error('Error preparing report:', error);
-    res.status(500).json({ message: "Failed to prepare report." });
+    res.status(500).json({ message: 'Failed to prepare report.' });
   }
 });
 
