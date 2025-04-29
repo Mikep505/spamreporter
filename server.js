@@ -2,7 +2,7 @@ const express = require('express');
 const fetch = require('node-fetch');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
-const rawAbuseContacts = require('./abuseContacts'); // Carrier contacts list
+const abuseContacts = require('./abuseContacts'); // Big carrier contact list
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,7 +15,7 @@ const limiter = rateLimit({
   legacyHeaders: false,
 });
 
-app.set('trust proxy', 1); // 🛡️ Important for Render rate limiting
+app.set('trust proxy', 1); // Fix for X-Forwarded-For on Render
 app.use(limiter);
 app.use(express.json());
 app.use(express.static('public'));
@@ -42,22 +42,35 @@ const prettyNumber = (num) => {
   }
 };
 
-// Normalize carrier names
+// Normalize carrier names for matching
 const normalizeName = (name) => {
-  return name.toLowerCase().replace(/[^a-z0-9]/g, '');
+  return name.toLowerCase()
+    .replace(/\s+/g, '')        // remove spaces
+    .replace(/[^a-z0-9]/g, ''); // remove non-alphanumeric
 };
 
-// Normalize abuseContacts once at startup
+// Build normalized lookup once at startup
 const normalizedAbuseContacts = {};
-for (const key in rawAbuseContacts) {
-  const normalizedKey = normalizeName(key);
-  normalizedAbuseContacts[normalizedKey] = rawAbuseContacts[key];
+for (const key in abuseContacts) {
+  normalizedAbuseContacts[normalizeName(key)] = abuseContacts[key];
 }
 
-// Find abuse contact based on normalized carrier
+// Find best abuse contact based on carrier name
 const findClosestAbuseContact = (carrierName) => {
   const normalizedCarrier = normalizeName(carrierName);
-  return normalizedAbuseContacts[normalizedCarrier] || null;
+
+  if (normalizedAbuseContacts[normalizedCarrier]) {
+    return normalizedAbuseContacts[normalizedCarrier];
+  }
+
+  // Fuzzy fallback
+  for (const key in normalizedAbuseContacts) {
+    if (normalizedCarrier.includes(key) || key.includes(normalizedCarrier)) {
+      return normalizedAbuseContacts[key];
+    }
+  }
+
+  return null;
 };
 
 app.post('/submit-report', async (req, res) => {
@@ -89,7 +102,7 @@ app.post('/submit-report', async (req, res) => {
 
     let provider = 'Unknown Carrier';
 
-    // Try CarrierLookup first
+    // Try CarrierLookup first, fallback to NumVerify if needed
     try {
       const carrierLookupResponse = await fetch(`https://www.carrierlookup.com/api/lookup?key=${process.env.CARRIERLOOKUP_API_KEY}&number=${encodeURIComponent(cleanOffendingNumber)}`);
       const carrierLookupData = await carrierLookupResponse.json();
@@ -125,8 +138,10 @@ app.post('/submit-report', async (req, res) => {
     console.log(`Carrier lookup result: ${provider}`);
     console.log(`Abuse contact found:`, abuseEmails || 'None');
 
+    // Always CC USAC reporting
     const ccEmails = ['potentialviolation@usac.org'];
 
+    // Add IRS reporting if selected
     if (isIRSScam === 'on' || isIRSScam === true) {
       ccEmails.push('phishing@irs.gov');
     }
