@@ -8,13 +8,13 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Rate Limit: 5 requests per minute
+app.set('trust proxy', 1); // Trust proxy headers from Render or other hosts
 const limiter = rateLimit({
   windowMs: 1 * 60 * 1000,
   max: 5,
   standardHeaders: true,
   legacyHeaders: false,
 });
-
 app.use(limiter);
 app.use(express.json());
 app.use(express.static('public'));
@@ -41,7 +41,7 @@ const prettyNumber = (num) => {
   }
 };
 
-// Smarter normalize carrier names
+// Normalize carrier names smarter
 const normalizeName = (name) => {
   if (!name) return '';
   const normalized = name
@@ -54,16 +54,27 @@ const normalizeName = (name) => {
   return normalized;
 };
 
+// Normalize all abuseContacts at startup
+const normalizedAbuseContacts = {};
+for (const key in abuseContacts) {
+  normalizedAbuseContacts[normalizeName(key)] = abuseContacts[key];
+}
+
 // Find best abuse contact based on carrier name
 const findClosestAbuseContact = (carrierName) => {
   const normalizedCarrier = normalizeName(carrierName);
 
-  for (const key in abuseContacts) {
-    const normalizedKey = normalizeName(key);
-    if (normalizedCarrier === normalizedKey || normalizedCarrier.includes(normalizedKey) || normalizedKey.includes(normalizedCarrier)) {
-      return abuseContacts[key];
+  if (normalizedAbuseContacts[normalizedCarrier]) {
+    return normalizedAbuseContacts[normalizedCarrier];
+  }
+
+  // Try loose matching
+  for (const key in normalizedAbuseContacts) {
+    if (normalizedCarrier.includes(key) || key.includes(normalizedCarrier)) {
+      return normalizedAbuseContacts[key];
     }
   }
+
   return null;
 };
 
