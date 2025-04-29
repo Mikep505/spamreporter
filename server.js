@@ -2,7 +2,7 @@ const express = require('express');
 const fetch = require('node-fetch');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
-const abuseContacts = require('./abuseContacts'); // Carrier abuse contacts
+const rawAbuseContacts = require('./abuseContacts'); // Carrier contacts list
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,23 +15,22 @@ const limiter = rateLimit({
   legacyHeaders: false,
 });
 
-app.set('trust proxy', 1); // Important for rate limiting behind Render or proxies
+app.set('trust proxy', 1); // 🛡️ Important for Render rate limiting
 app.use(limiter);
 app.use(express.json());
 app.use(express.static('public'));
 
-// Serve the index page
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/public/index.html');
 });
 
-// Sanitize user inputs
+// Helper to sanitize user inputs
 const sanitizeInput = (input, maxLength = 500) => {
   if (typeof input !== 'string') return '';
   return input.replace(/[<>"']/g, '').substring(0, maxLength).trim();
 };
 
-// Format phone numbers nicely
+// Helper to format phone numbers nicely
 const prettyNumber = (num) => {
   const n = num.replace(/\D/g, '');
   if (n.length === 10) {
@@ -45,28 +44,22 @@ const prettyNumber = (num) => {
 
 // Normalize carrier names
 const normalizeName = (name) => {
-  if (!name) return '';
-  return name
-    .replace(/\b(inc|inc\.|llc|corp|corporation|ltd|company|communications|wireless|solutions)\b/gi, '')
-    .replace(/\s+/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, '');
+  return name.toLowerCase().replace(/[^a-z0-9]/g, '');
 };
 
-// Preprocess abuse contacts
+// Normalize abuseContacts once at startup
 const normalizedAbuseContacts = {};
-for (const key in abuseContacts) {
+for (const key in rawAbuseContacts) {
   const normalizedKey = normalizeName(key);
-  normalizedAbuseContacts[normalizedKey] = abuseContacts[key];
+  normalizedAbuseContacts[normalizedKey] = rawAbuseContacts[key];
 }
 
-// Find best abuse contact
+// Find abuse contact based on normalized carrier
 const findClosestAbuseContact = (carrierName) => {
   const normalizedCarrier = normalizeName(carrierName);
   return normalizedAbuseContacts[normalizedCarrier] || null;
 };
 
-// Main POST handler
 app.post('/submit-report', async (req, res) => {
   const {
     name,
@@ -96,7 +89,7 @@ app.post('/submit-report', async (req, res) => {
 
     let provider = 'Unknown Carrier';
 
-    // Try CarrierLookup first, fallback to NumVerify if needed
+    // Try CarrierLookup first
     try {
       const carrierLookupResponse = await fetch(`https://www.carrierlookup.com/api/lookup?key=${process.env.CARRIERLOOKUP_API_KEY}&number=${encodeURIComponent(cleanOffendingNumber)}`);
       const carrierLookupData = await carrierLookupResponse.json();
@@ -181,7 +174,6 @@ Thank you for your commitment to keeping criminals from using the ${provider} ne
   }
 });
 
-// Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
