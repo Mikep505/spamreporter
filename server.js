@@ -93,6 +93,9 @@ app.post('/submit-report', async (req, res) => {
 
     // Log the lookup for debugging
     console.log(`Carrier lookup: ${provider}, Abuse Contact Found:`, abuseEmails || 'None');
+console.log('Carrier from lookup:', provider);
+console.log('Available abuse contact keys:', Object.keys(abuseContacts));
+
 
     // Always CC USAC reporting
     const ccEmails = ['potentialviolation@usac.org'];
