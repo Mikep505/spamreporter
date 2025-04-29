@@ -2,12 +2,15 @@ const express = require('express');
 const fetch = require('node-fetch');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
-const abuseContactsRaw = require('./abuseContacts'); // Full carrier contact list
+const abuseContacts = require('./abuseContacts'); // Carrier contacts
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Rate limit: 5 requests per minute
+// Trust proxies (needed for Render)
+app.set('trust proxy', 1);
+
+// Rate Limit: 5 requests per minute
 const limiter = rateLimit({
   windowMs: 1 * 60 * 1000,
   max: 5,
@@ -15,18 +18,21 @@ const limiter = rateLimit({
   legacyHeaders: false,
 });
 
-app.set('trust proxy', true); // Important fix for Render
 app.use(limiter);
 app.use(express.json());
 app.use(express.static('public'));
 
-// Helper: sanitize inputs
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/public/index.html');
+});
+
+// Helper to sanitize user inputs
 const sanitizeInput = (input, maxLength = 500) => {
   if (typeof input !== 'string') return '';
   return input.replace(/[<>"']/g, '').substring(0, maxLength).trim();
 };
 
-// Helper: pretty print phone numbers
+// Helper to format phone numbers nicely
 const prettyNumber = (num) => {
   const n = num.replace(/\D/g, '');
   if (n.length === 10) {
@@ -38,41 +44,43 @@ const prettyNumber = (num) => {
   }
 };
 
-// Helper: normalize carrier names
+// Normalize carrier names for comparison
 const normalizeName = (name) => {
-  return name.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
+  return name.toLowerCase().replace(/[^a-z0-9]/g, '');
 };
 
-// ✅ Normalize the abuse contacts at startup
-const abuseContacts = {};
-for (const carrier in abuseContactsRaw) {
-  const normalizedCarrier = normalizeName(carrier);
-  abuseContacts[normalizedCarrier] = abuseContactsRaw[carrier];
-}
-
-// Find best matching carrier
+// Find best abuse contact based on carrier name
 const findClosestAbuseContact = (carrierName) => {
   const normalizedCarrier = normalizeName(carrierName);
 
-  if (abuseContacts[normalizedCarrier]) {
-    console.log(`🔎 Exact match on: ${normalizedCarrier}`);
-    return abuseContacts[normalizedCarrier];
-  }
+  let bestMatch = null;
+  let shortestDistance = Infinity;
 
   for (const key in abuseContacts) {
-    if (normalizedCarrier.includes(key) || key.includes(normalizedCarrier)) {
-      console.log(`🔎 Fuzzy match: "${normalizedCarrier}" ≈ "${key}"`);
+    const normalizedKey = normalizeName(key);
+
+    if (normalizedCarrier === normalizedKey) {
+      console.log(`🎯 PERFECT MATCH: "${key}"`);
       return abuseContacts[key];
+    }
+
+    if (normalizedCarrier.includes(normalizedKey) || normalizedKey.includes(normalizedCarrier)) {
+      const distance = Math.abs(normalizedCarrier.length - normalizedKey.length);
+      if (distance < shortestDistance) {
+        shortestDistance = distance;
+        bestMatch = key;
+      }
     }
   }
 
-  console.log(`❌ No match found for: "${normalizedCarrier}"`);
+  if (bestMatch) {
+    console.log(`✅ BEST NEAR MATCH: "${bestMatch}"`);
+    return abuseContacts[bestMatch];
+  }
+
+  console.log(`❌ NO MATCH FOUND for: "${carrierName}"`);
   return null;
 };
-
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/public/index.html');
-});
 
 app.post('/submit-report', async (req, res) => {
   const {
@@ -104,6 +112,7 @@ app.post('/submit-report', async (req, res) => {
     let provider = 'Unknown Carrier';
 
     try {
+      // CarrierLookup first
       const carrierLookupResponse = await fetch(`https://www.carrierlookup.com/api/lookup?key=${process.env.CARRIERLOOKUP_API_KEY}&number=${encodeURIComponent(cleanOffendingNumber)}`);
       const carrierLookupData = await carrierLookupResponse.json();
 
@@ -114,32 +123,38 @@ app.post('/submit-report', async (req, res) => {
         console.log(`✅ Found provider from CarrierLookup: ${provider}`);
       } else {
         console.warn('⚠️ CarrierLookup failed, trying NumVerify...');
+
+        // NumVerify fallback
         const numverifyResponse = await fetch(`http://apilayer.net/api/validate?access_key=${process.env.NUMVERIFY_API_KEY}&number=${encodeURIComponent(fullNumber)}`);
         const numverifyData = await numverifyResponse.json();
+
         console.log('📦 NumVerify raw response:', JSON.stringify(numverifyData, null, 2));
 
         if (numverifyData?.carrier) {
           provider = numverifyData.carrier;
           console.log(`✅ Found provider from NumVerify: ${provider}`);
+        } else {
+          console.error('❌ Both CarrierLookup and NumVerify failed.');
         }
       }
     } catch (lookupError) {
-      console.error('❌ Error during carrier lookup:', lookupError);
+      console.error('❌ Lookup error:', lookupError);
     }
 
     console.log(`Normalizing carrier name: "${provider}" → "${normalizeName(provider)}"`);
-    const abuseEmails = findClosestAbuseContact(provider);
+
+    let abuseEmails = findClosestAbuseContact(provider);
 
     console.log(`Carrier lookup result: ${provider}`);
     console.log(`Abuse contact found:`, abuseEmails || 'None');
 
     const ccEmails = ['potentialviolation@usac.org'];
-
     if (isIRSScam === 'on' || isIRSScam === true) {
       ccEmails.push('phishing@irs.gov');
     }
 
     const emailSubject = `Fraud Operators Using ${provider} Network (${prettyNumber(sanitizedOffendingNumber)})`;
+
     const emailBody = `
 Hello,
 
@@ -153,7 +168,7 @@ ${sanitizedMessageContent ? `Message Content:\n"${sanitizedMessageContent}"\n` :
 Thank you for your commitment to keeping criminals from using the ${provider} network for their criminal operations.
 
 -${sanitizedName}
-`.trim();
+    `.trim();
 
     if (!abuseEmails) {
       return res.json({
