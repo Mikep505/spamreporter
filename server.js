@@ -7,8 +7,10 @@ const abuseContacts = require('./abuseContacts'); // Carrier contacts list
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust proxy for Render and correct client IP rate limiting
+app.set('trust proxy', 1);
+
 // Rate Limit: 5 requests per minute
-app.set('trust proxy', 1); // Trust proxy headers from Render or other hosts
 const limiter = rateLimit({
   windowMs: 1 * 60 * 1000,
   max: 5,
@@ -49,7 +51,7 @@ const normalizeName = (name) => {
     .replace(/\b(inc|inc\.|llc|corp|corporation|ltd|company|communications|wireless|solutions)\b/gi, '')
     .toLowerCase()
     .replace(/[^a-z0-9]/g, '');
-  
+
   console.log(`Normalizing carrier name: "${name}" → "${normalized}"`);
   return normalized;
 };
@@ -60,17 +62,18 @@ for (const key in abuseContacts) {
   normalizedAbuseContacts[normalizeName(key)] = abuseContacts[key];
 }
 
-// Find best abuse contact based on carrier name
+// Find best abuse contact based on smarter carrier name matching
 const findClosestAbuseContact = (carrierName) => {
   const normalizedCarrier = normalizeName(carrierName);
 
+  // First, exact match
   if (normalizedAbuseContacts[normalizedCarrier]) {
     return normalizedAbuseContacts[normalizedCarrier];
   }
 
-  // Try loose matching
+  // Second, loose match: contains or is contained
   for (const key in normalizedAbuseContacts) {
-    if (normalizedCarrier.includes(key) || key.includes(normalizedCarrier)) {
+    if (key.includes(normalizedCarrier) || normalizedCarrier.includes(key)) {
       return normalizedAbuseContacts[key];
     }
   }
