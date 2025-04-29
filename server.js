@@ -41,9 +41,17 @@ const prettyNumber = (num) => {
   }
 };
 
-// Normalize carrier names for matching
+// Smarter normalize carrier names
 const normalizeName = (name) => {
-  return name.toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (!name) return '';
+  const normalized = name
+    .trim()
+    .replace(/\b(inc|inc\.|llc|corp|corporation|ltd|company|communications|wireless|solutions)\b/gi, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+  
+  console.log(`Normalizing carrier name: "${name}" → "${normalized}"`);
+  return normalized;
 };
 
 // Find best abuse contact based on carrier name
@@ -56,7 +64,7 @@ const findClosestAbuseContact = (carrierName) => {
       return abuseContacts[key];
     }
   }
-  return null; // No guessing
+  return null;
 };
 
 app.post('/submit-report', async (req, res) => {
@@ -88,23 +96,21 @@ app.post('/submit-report', async (req, res) => {
 
     let provider = 'Unknown Carrier';
 
-    let carrierLookupData = null;
-    let numverifyData = null;
-
+    // Try CarrierLookup first, fallback to NumVerify if needed
     try {
       const carrierLookupResponse = await fetch(`https://www.carrierlookup.com/api/lookup?key=${process.env.CARRIERLOOKUP_API_KEY}&number=${encodeURIComponent(cleanOffendingNumber)}`);
-      carrierLookupData = await carrierLookupResponse.json();
+      const carrierLookupData = await carrierLookupResponse.json();
 
       console.log('📦 CarrierLookup raw response:', JSON.stringify(carrierLookupData, null, 2));
 
-      if (carrierLookupData && carrierLookupData.Response && carrierLookupData.Response.carrier && carrierLookupData.Response.carrier.toLowerCase() !== "unknown") {
+      if (carrierLookupData && carrierLookupData.Response && carrierLookupData.Response.carrier) {
         provider = carrierLookupData.Response.carrier;
         console.log(`✅ Found provider from CarrierLookup: ${provider}`);
       } else {
-        console.warn('⚠️ CarrierLookup did not return a valid carrier, trying NumVerify...');
+        console.warn('⚠️ CarrierLookup did not return a carrier, trying NumVerify...');
 
         const numverifyResponse = await fetch(`http://apilayer.net/api/validate?access_key=${process.env.NUMVERIFY_API_KEY}&number=${encodeURIComponent(fullNumber)}`);
-        numverifyData = await numverifyResponse.json();
+        const numverifyData = await numverifyResponse.json();
 
         console.log('📦 NumVerify raw response:', JSON.stringify(numverifyData, null, 2));
 
@@ -112,7 +118,7 @@ app.post('/submit-report', async (req, res) => {
           provider = numverifyData.carrier;
           console.log(`✅ Found provider from NumVerify: ${provider}`);
         } else {
-          console.error('❌ Both CarrierLookup and NumVerify failed to return a valid carrier.');
+          console.error('❌ Both CarrierLookup and NumVerify failed to return a carrier.');
         }
       }
     } catch (lookupError) {
@@ -124,10 +130,8 @@ app.post('/submit-report', async (req, res) => {
     console.log(`Carrier lookup result: ${provider}`);
     console.log(`Abuse contact found:`, abuseEmails || 'None');
 
-    // Always CC USAC reporting
     const ccEmails = ['potentialviolation@usac.org'];
 
-    // Add IRS reporting if selected
     if (isIRSScam === 'on' || isIRSScam === true) {
       ccEmails.push('phishing@irs.gov');
     }
@@ -156,7 +160,7 @@ Thank you for your commitment to keeping criminals from using the ${provider} ne
         emailBody,
         provider,
         manualAction: true,
-        message: `No known abuse contact found for "${provider}". Please report manually.`
+        message: `⚠️ No known abuse contact found for "${provider}". Please report manually.`
       });
     }
 
@@ -176,6 +180,6 @@ Thank you for your commitment to keeping criminals from using the ${provider} ne
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
 
