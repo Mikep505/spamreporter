@@ -11,6 +11,7 @@
     "node-fetch": "^2.6.11",
     "dotenv": "^16.4.1",
     "express-rate-limit": "^7.0.0"
+    "twilio": "^4.13.0"
   },
   "license": "ISC"
 }
