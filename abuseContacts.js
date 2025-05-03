@@ -78,6 +78,7 @@ const abuseContacts = {
   "Telnyx": ["support@telnyx.com"],
   "TextPlus": ["support@textplus.com", "lawenforcement@textplusteam.com", "abuse@textplus.com", "bishop@textplus.com"],
   "Thinq": ["noc@thinq.com"],
+  "T-MOBILE USA INC": ["abuse@t-mobile.com"],
   "TollFreeForwarding.com": ["support@tollfreeforwarding.com"],
   "USA Mobility Wireless, Inc.": ["customer.care@spok.com"],
   "Vonage": ["abuse@vonage.com", "phishing@vonage.com"],
