@@ -79,14 +79,11 @@
 </head>
 <body>
   <div class="container">
-    <h1>Report a Smishing Text</h1>
-    <p class="intro">
-      Have you ever received strange text messages from unknown numbers saying things like
-      "How have you been?" or "What time are you picking me up?"?
-      These are called smishing attacks — like phishing, but delivered through SMS.
-      This form provides a fast, easy way to report suspicious numbers so that carriers can investigate and shut them down.
-      Don’t worry about accidentally reporting legitimate wrong-number texts — carriers are able to distinguish fraud from genuine messages.
-    </p>
+    <h1>Report a Scam Text</h1>
+    <p><strong>Have you ever received strange text messages from unknown numbers saying things like “How have you been?” or “What time are you picking me up?”</strong><br>
+    These are called <strong>smishing attacks</strong> — like phishing, but delivered through SMS.<br><br>
+    This form provides a fast, easy way to report suspicious numbers so that carriers can investigate and shut them down.<br><br>
+    <em>Don’t worry about accidentally reporting legitimate wrong-number texts — carriers are able to distinguish fraud from genuine messages.</em></p>
 
     <form id="reportForm">
       <label for="name">Your Name</label>
@@ -99,13 +96,21 @@
       <input type="text" id="phoneNumber" name="phoneNumber" required>
 
       <label for="countryCode">Offending Number Country Code</label>
-      <select id="countryCode" name="countryCode" required>
+      <select id="countryCode" name="countryCode">
         <option value="+1" selected>+1 (USA/Canada)</option>
         <option value="+44">+44 (UK)</option>
         <option value="+61">+61 (Australia)</option>
         <option value="+49">+49 (Germany)</option>
         <option value="+33">+33 (France)</option>
         <option value="+91">+91 (India)</option>
+        <option value="+81">+81 (Japan)</option>
+        <option value="+86">+86 (China)</option>
+        <option value="+55">+55 (Brazil)</option>
+        <option value="+34">+34 (Spain)</option>
+        <option value="+39">+39 (Italy)</option>
+        <option value="+7">+7 (Russia)</option>
+        <option value="+27">+27 (South Africa)</option>
+        <option value="+64">+64 (New Zealand)</option>
         <!-- Add more as needed -->
       </select>
 
