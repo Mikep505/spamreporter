@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spam Text Reporter</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      color: #003366;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #003366;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      margin-top: 20px;
+      cursor: pointer;
+    }
+    .result-box {
+      margin-top: 30px;
+      background: #f1f1f1;
+      padding: 15px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .email-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .email-buttons button {
+      flex-grow: 1;
+    }
+    .checkbox-inline {
+      margin-top: 1rem;
+      white-space: nowrap;
+    }
+    .checkbox-inline label {
+      display: inline-flex;
+      align-items: center;
+      font-weight: normal;
+    }
+    .checkbox-inline input[type="checkbox"] {
+      margin-left: 6px;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Report a Scam Text</h1>
+  <p><strong>Have you ever received strange text messages from unknown numbers saying things like “How have you been?” or “What time are you picking me up?”</strong><br>
+    These are called <strong>smishing attacks</strong> — like phishing, but delivered through SMS.<br><br>
+    This form provides a fast, easy way to report suspicious numbers so that carriers can investigate and shut them down.<br><br>
+    <em>Don’t worry about accidentally reporting legitimate wrong-number texts — carriers are able to distinguish fraud from genuine messages.</em></p>
+
+  <form id="reportForm">
+    <label for="name">Your Name</label>
+    <input type="text" id="name" name="name" required>
+
+    <label for="email">Your Email</label>
+    <input type="email" id="email" name="email" required>
+
+    <label for="phoneNumber">Your Phone Number</label>
+    <input type="text" id="phoneNumber" name="phoneNumber" required>
+
+    <label for="countryCode">Offending Number Country Code</label>
+    <select id="countryCode" name="countryCode">
+      <option value="+1" selected>+1 (USA/Canada)</option>
+      <option value="+44">+44 (UK)</option>
+      <option value="+61">+61 (Australia)</option>
+      <option value="+49">+49 (Germany)</option>
+      <option value="+33">+33 (France)</option>
+      <option value="+91">+91 (India)</option>
+      <option value="+81">+81 (Japan)</option>
+      <option value="+86">+86 (China)</option>
+      <option value="+55">+55 (Brazil)</option>
+      <option value="+34">+34 (Spain)</option>
+      <option value="+39">+39 (Italy)</option>
+      <option value="+7">+7 (Russia)</option>
+      <option value="+27">+27 (South Africa)</option>
+      <option value="+64">+64 (New Zealand)</option>
+    </select>
+
+    <label for="offendingNumber">Offending Number</label>
+    <input type="text" id="offendingNumber" name="offendingNumber" required>
+
+    <label for="date">Date of Message</label>
+    <input type="date" id="date" name="date" required>
+
+    <label for="time">Time of Message</label>
+    <input type="time" id="time" name="time" required>
+
+    <label for="timeZone">Your Time Zone</label>
+    <input type="text" id="timeZone" name="timeZone" required>
+
+    <label for="messageContent">Message Content</label>
+    <textarea id="messageContent" name="messageContent" rows="5"></textarea>
+
+    <div class="checkbox-inline">
+      <label for="isIRSScam">
+        Check this box if this is an IRS-related scam:
+        <input type="checkbox" id="isIRSScam" name="isIRSScam">
+      </label>
+    </div>
+
+    <button type="submit">Submit Report</button>
+  </form>
+
+  <div id="emailOutput" class="result-box" style="display:none;">
+    <h2>Email Report Details</h2>
+    <p><strong>To:</strong> <span id="toField"></span></p>
+    <p><strong>CC:</strong> <span id="ccField"></span></p>
+    <p><strong>Subject:</strong> <span id="subjectField"></span></p>
+    <textarea id="emailBody" rows="12" readonly style="width: 100%; font-family: monospace;"></textarea>
+    <div class="email-buttons">
+      <button id="copyEmail">Copy to Clipboard</button>
+      <button id="openGmail">Send with Gmail</button>
+      <button id="openOutlook">Send with Outlook</button>
+      <button id="openYahoo">Send with Yahoo</button>
+      <button id="downloadEml">Download .eml</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('reportForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const formData = Object.fromEntries(new FormData(this));
+    const response = await fetch('/submit-report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData)
+    });
+
+    const result = await response.json();
+    document.getElementById('toField').textContent = (result.abuseEmails || []).join(', ');
+    document.getElementById('ccField').textContent = (result.ccEmails || []).join(', ');
+    document.getElementById('subjectField').textContent = result.emailSubject;
+    document.getElementById('emailBody').value = result.emailBody;
+    document.getElementById('emailOutput').style.display = 'block';
+
+    const mailtoSubject = encodeURIComponent(result.emailSubject);
+    const mailtoBody = encodeURIComponent(result.emailBody);
+    document.getElementById('openGmail').onclick = () => window.open(`https://mail.google.com/mail/?view=cm&to=${result.abuseEmails.join(',')}&cc=${result.ccEmails.join(',')}&su=${mailtoSubject}&body=${mailtoBody}`);
+    document.getElementById('openOutlook').onclick = () => window.open(`https://outlook.office.com/mail/deeplink/compose?to=${result.abuseEmails.join(',')}&cc=${result.ccEmails.join(',')}&subject=${mailtoSubject}&body=${mailtoBody}`);
+    document.getElementById('openYahoo').onclick = () => window.open(`https://compose.mail.yahoo.com/?to=${result.abuseEmails.join(',')}&cc=${result.ccEmails.join(',')}&subject=${mailtoSubject}&body=${mailtoBody}`);
+    document.getElementById('copyEmail').onclick = () => {
+      navigator.clipboard.writeText(result.emailBody);
+      alert('Email body copied to clipboard');
+    };
+    document.getElementById('downloadEml').onclick = () => {
+      const blob = new Blob([
+        `To: ${result.abuseEmails.join(', ')}\n` +
+        `CC: ${result.ccEmails.join(', ')}\n` +
+        `Subject: ${result.emailSubject}\n\n` +
+        `${result.emailBody}`
+      ], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'report.eml';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    };
+  });
+</script>
+</body>
+</html>
+
