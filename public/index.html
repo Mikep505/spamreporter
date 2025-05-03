@@ -3,87 +3,88 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Spam Reporter</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <title>Spam Text Reporter</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
     body {
-      font-family: 'Inter', sans-serif;
-      margin: 0;
-      padding: 0;
+      font-family: Arial, sans-serif;
       background: #f4f6f8;
+      margin: 0;
+      padding: 20px;
       color: #333;
     }
-    header {
-      background: #004080;
-      color: white;
-      padding: 1rem 2rem;
-      text-align: center;
-    }
-    main {
-      max-width: 700px;
-      margin: 2rem auto;
+    .container {
+      max-width: 800px;
+      margin: auto;
       background: white;
-      padding: 2rem;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
     }
     h1 {
+      color: #003366;
       margin-top: 0;
+    }
+    .intro {
+      margin-bottom: 25px;
+      line-height: 1.6;
     }
     label {
       display: block;
-      margin-top: 1rem;
-      font-weight: 600;
+      margin-top: 15px;
+      font-weight: bold;
     }
     input, textarea, select {
       width: 100%;
-      padding: 0.75rem;
-      margin-top: 0.25rem;
-      border-radius: 5px;
+      padding: 10px;
+      margin-top: 5px;
       border: 1px solid #ccc;
-      font-size: 1rem;
+      border-radius: 4px;
+    }
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      margin-top: 15px;
+    }
+    .checkbox-row input[type="checkbox"] {
+      margin-right: 10px;
     }
     button {
-      margin-top: 1.5rem;
-      padding: 0.75rem 1.5rem;
-      background: #004080;
+      background-color: #003366;
       color: white;
+      padding: 10px 20px;
       border: none;
       border-radius: 5px;
-      font-size: 1rem;
+      margin-top: 20px;
       cursor: pointer;
     }
-    .response-section {
-      background: #eef4ff;
-      border-left: 4px solid #004080;
-      padding: 1rem;
-      margin-top: 2rem;
-      white-space: pre-wrap;
+    .result-box {
+      margin-top: 30px;
+      background: #f1f1f1;
+      padding: 15px;
+      border: 1px solid #ccc;
       border-radius: 5px;
-      font-family: monospace;
     }
-    .button-group {
+    .email-buttons {
       display: flex;
+      gap: 10px;
+      margin-top: 10px;
       flex-wrap: wrap;
-      gap: 1rem;
-      margin-top: 1rem;
     }
-    .button-group button {
-      flex: 1;
-      min-width: 150px;
+    .email-buttons button {
+      flex-grow: 1;
+      white-space: nowrap;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>SMS Scam Reporter</h1>
-  </header>
-  <main>
-    <p>
-      Have you ever received strange text messages from unknown numbers saying things like "How have you been?" or "What time are you picking me up?"?
-      <br><br>
-      These are called <strong>smishing attacks</strong> — like phishing, but delivered through SMS. This form provides a fast, easy way to report suspicious numbers so that carriers can investigate and shut them down.
-      <br><br>
+  <div class="container">
+    <h1>Report a Smishing Text</h1>
+    <p class="intro">
+      Have you ever received strange text messages from unknown numbers saying things like
+      "How have you been?" or "What time are you picking me up?"?
+      These are called smishing attacks — like phishing, but delivered through SMS.
+      This form provides a fast, easy way to report suspicious numbers so that carriers can investigate and shut them down.
       Don’t worry about accidentally reporting legitimate wrong-number texts — carriers are able to distinguish fraud from genuine messages.
     </p>
 
@@ -97,96 +98,60 @@
       <label for="phoneNumber">Your Phone Number</label>
       <input type="text" id="phoneNumber" name="phoneNumber" required>
 
-      <label for="countryCode">Country Code</label>
-      <input type="text" id="countryCode" name="countryCode" value="+1" required>
+      <label for="countryCode">Offending Number Country Code</label>
+      <select id="countryCode" name="countryCode" required>
+        <option value="+1" selected>+1 (USA/Canada)</option>
+        <option value="+44">+44 (UK)</option>
+        <option value="+61">+61 (Australia)</option>
+        <option value="+49">+49 (Germany)</option>
+        <option value="+33">+33 (France)</option>
+        <option value="+91">+91 (India)</option>
+        <!-- Add more as needed -->
+      </select>
 
       <label for="offendingNumber">Offending Number</label>
       <input type="text" id="offendingNumber" name="offendingNumber" required>
 
-      <label for="date">Date</label>
+      <label for="date">Date of Message</label>
       <input type="date" id="date" name="date" required>
 
-      <label for="time">Time</label>
+      <label for="time">Time of Message</label>
       <input type="time" id="time" name="time" required>
 
-      <label for="timeZone">Time Zone</label>
+      <label for="timeZone">Your Time Zone</label>
       <input type="text" id="timeZone" name="timeZone" required>
 
       <label for="messageContent">Message Content</label>
-      <textarea id="messageContent" name="messageContent" rows="4"></textarea>
+      <textarea id="messageContent" name="messageContent" rows="5"></textarea>
 
-      <label>
-        <input type="checkbox" id="isIRSScam" name="isIRSScam">
-        This is an IRS-related scam
-      </label>
+<div style="margin-top: 1rem; white-space: nowrap;">
+  <label for="isIRSScam" style="display: inline-flex; align-items: center;">
+    Check this box if this is an IRS-related scam:
+    <input type="checkbox" id="isIRSScam" name="isIRSScam" style="margin-left: 6px;">
+  </label>
+</div>
+
+
 
       <button type="submit">Submit Report</button>
     </form>
 
-    <div id="result" class="response-section" style="display:none;"></div>
-    <div class="button-group" id="actions" style="display:none;">
-      <button onclick="copyEmail()">📋 Copy Email</button>
-      <button onclick="downloadEML()">📩 Download .eml</button>
-      <button onclick="openInGmail()">📧 Open in Gmail</button>
-      <button onclick="openInOutlook()">📨 Open in Outlook</button>
+    <div id="emailOutput" class="result-box" style="display:none;">
+      <h2>Email Report Details</h2>
+      <p><strong>To:</strong> <span id="toField"></span></p>
+      <p><strong>CC:</strong> <span id="ccField"></span></p>
+      <p><strong>Subject:</strong> <span id="subjectField"></span></p>
+      <textarea id="emailBody" rows="12" readonly style="width: 100%; font-family: monospace;"></textarea>
+      <div class="email-buttons">
+        <button id="copyEmail">Copy to Clipboard</button>
+        <button id="openGmail">Send with Gmail</button>
+        <button id="openOutlook">Send with Outlook</button>
+        <button id="openYahoo">Send with Yahoo</button>
+        <button id="downloadEml">Download .eml</button>
+      </div>
     </div>
-  </main>
-
-  <script>
-    const form = document.getElementById('reportForm');
-    const resultDiv = document.getElementById('result');
-    const actionsDiv = document.getElementById('actions');
-    let lastEmailData = {};
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const formData = new FormData(form);
-      const data = Object.fromEntries(formData);
-
-      const res = await fetch('/submit-report', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-
-      const json = await res.json();
-      resultDiv.style.display = 'block';
-      resultDiv.textContent = `${json.manualAction ? '⚠️ ' + json.message + '\n\n' : ''}${json.emailBody}`;
-      actionsDiv.style.display = 'flex';
-      lastEmailData = json;
-    });
-
-    function copyEmail() {
-      navigator.clipboard.writeText(lastEmailData.emailBody);
-      alert('Copied to clipboard');
-    }
-
-    function downloadEML() {
-      const emlContent = `To: ${lastEmailData.abuseEmails?.join(', ')}\nCC: ${lastEmailData.ccEmails?.join(', ')}\nSubject: ${lastEmailData.emailSubject}\n\n${lastEmailData.emailBody}`;
-      const blob = new Blob([emlContent], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'report.eml';
-      a.click();
-    }
-
-    function openInGmail() {
-      const subject = encodeURIComponent(lastEmailData.emailSubject);
-      const body = encodeURIComponent(lastEmailData.emailBody);
-      const to = encodeURIComponent((lastEmailData.abuseEmails || []).join(','));
-      const cc = encodeURIComponent((lastEmailData.ccEmails || []).join(','));
-      window.open(`https://mail.google.com/mail/?view=cm&to=${to}&cc=${cc}&su=${subject}&body=${body}`, '_blank');
-    }
-
-    function openInOutlook() {
-      const subject = encodeURIComponent(lastEmailData.emailSubject);
-      const body = encodeURIComponent(lastEmailData.emailBody);
-      const to = encodeURIComponent((lastEmailData.abuseEmails || []).join(','));
-      const cc = encodeURIComponent((lastEmailData.ccEmails || []).join(','));
-      window.open(`https://outlook.live.com/mail/deeplink/compose?to=${to}&cc=${cc}&subject=${subject}&body=${body}`, '_blank');
-    }
-  </script>
+  </div>
+  <script src="script.js"></script>
 </body>
 </html>
 
