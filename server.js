@@ -41,18 +41,45 @@ const prettyNumber = (num) => {
 
 const normalizeName = (name) => name.toLowerCase().replace(/[^a-z0-9]/g, '');
 
+
+//const findClosestAbuseContact = (carrierName) => {
+//const normalizedCarrier = normalizeName(carrierName);
+//  for (const key in abuseContacts) {
+//    const normalizedKey = normalizeName(key);
+//    if (normalizedCarrier === normalizedKey || normalizedCarrier.includes(normalizedKey) || normalizedKey.includes(normalizedCarrier)) {
+//      console.log(`✅ Matched abuse contact: ${key}`);
+//      return abuseContacts[key];
+//    }
+//  }
+//  console.warn(`❌ NO MATCH FOUND for: "${carrierName}"`);
+//  return null;
+//};
+
+
 const findClosestAbuseContact = (carrierName) => {
   const normalizedCarrier = normalizeName(carrierName);
+  let bestMatch = null;
+
   for (const key in abuseContacts) {
     const normalizedKey = normalizeName(key);
-    if (normalizedCarrier === normalizedKey || normalizedCarrier.includes(normalizedKey) || normalizedKey.includes(normalizedCarrier)) {
-      console.log(`✅ Matched abuse contact: ${key}`);
-      return abuseContacts[key];
+    if (
+      normalizedCarrier === normalizedKey ||
+      normalizedCarrier.includes(normalizedKey) ||
+      normalizedKey.includes(normalizedCarrier)
+    ) {
+      console.log(`✅ Matched abuse contact: "${key}"`);
+      bestMatch = abuseContacts[key];
+      break;
     }
   }
-  console.warn(`❌ NO MATCH FOUND for: "${carrierName}"`);
-  return null;
+
+  if (!bestMatch) {
+    console.warn(`❌ NO MATCH FOUND for: "${carrierName}"`);
+  }
+
+  return bestMatch;
 };
+
 
 app.post('/submit-report', async (req, res) => {
   const {
