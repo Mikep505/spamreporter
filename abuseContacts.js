@@ -75,7 +75,10 @@ const abuseContacts = {
   "TC Systems": ["support@tctechsystems.com"],
   "Telengy L.L.C": ["info@telengy.net", "lnp@telengy.net", "noc@telengy.net", "legal@telengy.net", "abuse@telengy.net", "support@telengy.net", "sales@telengy.net"],
   "Teleport Communications America": ["info@teleportone.com", "abuse@teleportone.com", "support@teleportone.com"],
-  "Telnyx": ["support@telnyx.com"],
+  "Telnyx": {
+    emails: ["support@telnyx.com"],
+    url: "https://telnyx.com/report-abuse"
+  },
   "TextPlus": ["support@textplus.com", "lawenforcement@textplusteam.com", "abuse@textplus.com", "bishop@textplus.com"],
   "Thinq": ["noc@thinq.com"],
   "T-MOBILE USA INC": ["abuse@t-mobile.com"],
