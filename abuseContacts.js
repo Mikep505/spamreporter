@@ -51,7 +51,7 @@ const abuseContacts = {
   "Integrated Path Communications, LLC": { emails: ["customercare@iristel.com", "abuse@iristel.com", "support@iristel.com", "security@iristel.ca"], url: "" },
   "Inteliquent": { emails: ["regina.echols@inteliquent.com", "abuse@onvoy.com"], url: "https://www.inteliquent.com/contact-legal/report-abuse" },
   "ISP Telecom": { emails: ["sub-inquiry@isptelecom.net", "marianne@isptelecom.net"], url: "" },
-  "KCINDUR Communications": { emails: ["kim@advancedwireless.us", "abuse@advancedwireless.us", "support@advancedwireless.us"], url: "" }
+  "KCINDUR Communications": { emails: ["kim@advancedwireless.us", "abuse@advancedwireless.us", "support@advancedwireless.us"], url: "" },
   "Level 3 Communications": { emails: ["security.feedback@level3.com", "abuse@level3.com"], url: "" },
   "Local Access LLC": { emails: ["subpoena@localaccessllc.com", "sales@localaccessllc.com", "report@peerlessnetwork.com"], url: "" },
   "Navigata": { emails: ["connections@navigata.ca", "sales@navigata.ca", "abuse@navigata.ca", "support@navigata.ca"], url: "" },
