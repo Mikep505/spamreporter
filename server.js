@@ -60,7 +60,7 @@ const findClosestAbuseContact = (carrierName) => {
       normalizedKey.includes(normalizedCarrier)
     ) {
       console.log(`✅ Matched abuse contact: ${key}`);
-      return abuseContacts[key];
+      return abuseContacts[key];  // Now returns { emails: [...], url: "..." }
     }
   }
 
@@ -167,10 +167,14 @@ app.post('/submit-report', async (req, res) => {
     const normalized = normalizeName(provider);
     console.log(`Normalizing carrier name: "${provider}" → "${normalized}"`);
 
-    let abuseEmails = findClosestAbuseContact(provider);
-    if (!abuseEmails && provider && provider.includes(' ')) {
-      abuseEmails = [`abuse@${provider.toLowerCase().replace(/[^a-z0-9]+/g, '')}.com`];
-    }
+let abuseEntry = findClosestAbuseContact(provider);
+let abuseEmails = abuseEntry?.emails || null;
+let abuseUrl = abuseEntry?.url || null;
+
+if (!abuseEmails && provider && provider.includes(' ')) {
+  abuseEmails = [`abuse@${provider.toLowerCase().replace(/[^a-z0-9]+/g, '')}.com`];
+}
+
 
     const ccEmails = ['potentialviolation@usac.org'];
     if (isIRSScam === 'on' || isIRSScam === true) ccEmails.push('phishing@irs.gov');
