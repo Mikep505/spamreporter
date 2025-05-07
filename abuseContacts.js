@@ -20,7 +20,7 @@ const abuseContacts = {
   "Advanced Telecom Solutions, LLC": { emails: ["support@turbobridge.com"], url: "" },
   "Aerialink/Geneseo (SVR)": { emails: ["support@mybwc.zendesk.com"], url: "" },
   "Airus": { emails: ["report@peerlessnetwork.com", "CourtOrders@subsentio.com", "LELiaison@subsentio.com", "Abuse@subsentio.com", "abuse@peerlessnetwork.com", "trouble@peerlessnetwork.com"], url: "" },
-  "Alcazar Networks": { emails: ["johnc@alcazarnetworks.com", "cso@alcazarnetworks.com", "abuse@alcazarnetworks.com"], url: "" }
+  "Alcazar Networks": { emails: ["johnc@alcazarnetworks.com", "cso@alcazarnetworks.com", "abuse@alcazarnetworks.com"], url: "" },
   "Allstream Inc.": { emails: ["abuse@zayo.com", "CanCustomerService@Allstream.com", "UScustomerservice@allstream.com", "support@allstream.com"], url: "" },
   "Ameritech Illinois": { emails: ["abuse@att.net"], url: "" },
   "AT&T": { emails: ["abuse@att.net"], url: "" },
@@ -37,7 +37,7 @@ const abuseContacts = {
   "Cingular Wireless": { emails: ["customerservice@consumercellular.com", "support@consumercellular.com"], url: "" },
   "Core Communications": { emails: ["voipservice@coretel.net", "sales@coretel.net", "abuse@coretel.net", "service@coretel.net"], url: "" },
   "Coretel": { emails: ["voipservice@coretel.net", "sales@coretel.net", "abuse@coretel.net", "service@coretel.net"], url: "" },
-  "CTSI, Inc": { emails: ["tammy@ctsioutsourcing.com"], url: "" }
+  "CTSI, Inc": { emails: ["tammy@ctsioutsourcing.com"], url: "" },
   "Distributel": { emails: ["abuse@distributel.ca", "support@thinktel.ca", "info@distributel.ca", "sales@distributel.ca"], url: "" },
   "Excel Telecommunications": { emails: ["customercare@impacttelecom.com"], url: "" },
   "Exiant Communications": { emails: ["crm@blitztelus.com", "lnp@exiantcom.com"], url: "" },
@@ -66,7 +66,7 @@ const abuseContacts = {
   "RingCentral": { emails: ["fraudresponse@ringcentral.com", "Fraudalert@ringcentral.com"], url: "" },
   "Rogers Communications Partnership": { emails: ["abuse@rogers.com", "phishing@rogers.com"], url: "" },
   "Rogers Wireless": { emails: ["abuse@rogers.com", "phishing@rogers.com"], url: "" },
-  "Signal One": { emails: ["admin@soe01.com"], url: "" }
+  "Signal One": { emails: ["admin@soe01.com"], url: "" },
   "SIP.US": { emails: ["abuse@sip.us", "support@mybwc.zendesk.com", "voicesecurity@bandwidth.com"], url: "https://www.bandwidth.com/report-a-phone-number/" },
   "Skype/Level 3": { emails: ["security.feedback@level3.com", "abuse@level3.com"], url: "" },
   "Sonic Systems": { emails: ["psftech@swbell.net", "abuse@swbell.net"], url: "" },
