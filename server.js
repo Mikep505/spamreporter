@@ -119,8 +119,24 @@ app.post('/submit-report', async (req, res) => {
     const sanitizedEmail = sanitizeInput(email, 150);
     const sanitizedPhoneNumber = sanitizeInput(phoneNumber, 20);
     const sanitizedOffendingNumber = sanitizeInput(offendingNumber, 20).replace(/\D/g, '');
-    const sanitizedDate = sanitizeInput(date, 20);
-    const sanitizedTime = sanitizeInput(time, 20);
+
+const rawDate = sanitizeInput(date, 20);  // yyyy-mm-dd
+const rawTime = sanitizeInput(time, 20);  // 24h
+
+let formattedDate = rawDate;
+let formattedTime = rawTime;
+
+try {
+  const isoString = `${rawDate}T${rawTime}`;
+  const dateObj = new Date(isoString);
+
+  formattedDate = dateObj.toLocaleDateString('en-US'); // MM/DD/YYYY
+  formattedTime = dateObj.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }); // 12-hour format with AM/PM
+} catch (e) {
+  console.warn('⚠️ Failed to format date/time:', e);
+}
+
+
     const sanitizedTimeZone = sanitizeInput(timeZone, 20);
     const sanitizedMessageContent = sanitizeInput(messageContent, 2000);
 
@@ -187,7 +203,8 @@ Fraudulent scam operation using this number ${prettyNumber(sanitizedOffendingNum
 
 This ${provider} customer is using your network for Fraud/Scam operations. Please cancel this customer using this line ${prettyNumber(sanitizedOffendingNumber)}, and all lines associated with them.
 
-They texted my number ${prettyNumber(sanitizedPhoneNumber)} at ${sanitizedTime} ${sanitizedTimeZone} on ${sanitizedDate}.
+They texted my number ${prettyNumber(sanitizedPhoneNumber)} at ${formattedTime} ${sanitizedTimeZone} on ${formattedDate}.
+
 ${sanitizedMessageContent ? `Message Content:\n"${sanitizedMessageContent}"\n` : ''}
 Thank you for your commitment to keeping criminals from using the ${provider} network for their criminal operations.
 
