@@ -181,6 +181,7 @@ try {
     }
 
     const normalized = normalizeName(provider);
+    const abuseInfo = abuseContacts[normalized];
     console.log(`Normalizing carrier name: "${provider}" → "${normalized}"`);
 
 let abuseEntry = findClosestAbuseContact(provider);

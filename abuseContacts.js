@@ -85,3 +85,14 @@ const abuseContacts = {
   "ZipWhip": { emails: ["supportlist@zipwhip.com", "support@zipwhip.com", "reportabuse@zipwhip.com"], url: "" }
 };
 
+
+// Normalize all keys
+const normalizeName = (name) => name.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+const abuseContacts = {};
+for (const [key, value] of Object.entries(rawContacts)) {
+  const normalizedKey = normalizeName(key);
+  abuseContacts[normalizedKey] = value;
+}
+
+module.exports = abuseContacts;
