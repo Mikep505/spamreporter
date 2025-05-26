@@ -1,5 +1,5 @@
 // Full abuse contacts list
-const abuseContacts = {
+const rawContacts = {
   "Enflick": { emails: ["abuse@enflick.com", "abuse@textnow.com"], url: "" },
   "TextNow": { emails: ["abuse@textnow.com", "abuse@enflick.com"], url: "" },
   "Google Voice": { emails: ["support@mybwc.zendesk.com"], url: "" },
