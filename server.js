@@ -205,7 +205,6 @@ Fraudulent scam operation using this number ${prettyNumber(sanitizedOffendingNum
 This ${provider} customer is using your network for Fraud/Scam operations. Please cancel this customer using this line ${prettyNumber(sanitizedOffendingNumber)}, and all lines associated with them.
 
 They texted my number ${prettyNumber(sanitizedPhoneNumber)} at ${formattedTime} ${sanitizedTimeZone} on ${formattedDate}.
-
 ${sanitizedMessageContent ? `Message Content:\n"${sanitizedMessageContent}"\n` : ''}
 Thank you for your commitment to keeping criminals from using the ${provider} network for their criminal operations.
 
