@@ -115,10 +115,14 @@ app.post('/submit-report', async (req, res) => {
   } = req.body;
 
   try {
-    const sanitizedName = sanitizeInput(name, 100);
-    const sanitizedEmail = sanitizeInput(email, 150);
-    const sanitizedPhoneNumber = sanitizeInput(phoneNumber, 20);
+    const sanitizedName = sanitizeInput(name, 100) || "<YOUR NAME HERE>";
+    const sanitizedEmail = sanitizeInput(email, 150) || "<YOUR EMAIL HERE>";
+    const sanitizedPhoneNumber = sanitizeInput(phoneNumber, 20) || "<YOUR PHONE NUMBER HERE>";
     const sanitizedOffendingNumber = sanitizeInput(offendingNumber, 20).replace(/\D/g, '');
+
+if (!sanitizedOffendingNumber) {
+  return res.status(400).send("Offending number is required.");
+}
 
 const rawDate = sanitizeInput(date, 20);  // yyyy-mm-dd
 const rawTime = sanitizeInput(time, 20);  // 24h
